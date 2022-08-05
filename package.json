@@ -1,0 +1,30 @@
+{
+  "name": "quackers",
+  "version": "1.0.0",
+  "description": "A console logger for dotnet test with super-duck-powers",
+  "scripts": {
+    "test": "run-s \"zarro test-dotnet\"",
+    "build": "run-s \"zarro build\"",
+    "demo": "dotnet test -l quackers src/Demo/Demo.csproj",
+    "release": "dotnet pack -c release src/Quackers.TestLogger/Quackers.TestLogger.csproj",
+    "zarro": "cross-env DOTNET_CORE=1 zarro"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fluffynuts/quackers.git"
+  },
+  "keywords": [
+    "dotnet",
+    "log",
+    "test"
+  ],
+  "author": "",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/fluffynuts/quackers/issues"
+  },
+  "homepage": "https://github.com/fluffynuts/quackers#readme",
+  "devDependencies": {
+    "zarro": "^1.106.0"
+  }
+}

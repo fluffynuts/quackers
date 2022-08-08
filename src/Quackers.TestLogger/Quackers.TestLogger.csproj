@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
@@ -12,11 +11,9 @@
     <VersionPrefix>1.0.1</VersionPrefix>
     <Description>A console logger for dotnet test which is cute and loud... Just like a duck!</Description>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="17.2.0" />
-    <PackageReference Include="Pastel" Version="3.0.1" />
-    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
+    <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="17.2.0"/>
+    <PackageReference Include="Pastel" Version="3.0.1"/>
+    <PackageReference Include="System.Reflection.Emit" Version="4.7.0"/>
   </ItemGroup>
-
 </Project>

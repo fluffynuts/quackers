@@ -6,8 +6,8 @@
     "test": "run-s \"zarro test-dotnet\"",
     "build": "run-s \"zarro build\"",
     "demo": "dotnet test -l quackers src/Demo/Demo.csproj",
-    "release": "dotnet pack -c release src/Quackers.TestLogger/Quackers.TestLogger.csproj",
-    "zarro": "cross-env DOTNET_CORE=1 zarro"
+    "release": "cross-env PACK_INCREMENT_VERSION=1 run-s \"zarro release\"",
+    "zarro": "cross-env DOTNET_CORE=1 PACK_INCLUDE_CSPROJ=**/Quackers.TestLogger.csproj zarro"
   },
   "repository": {
     "type": "git",

@@ -8,7 +8,7 @@
     <PackageProjectUrl>https://github.com/fluffynuts/Quackers</PackageProjectUrl>
     <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
     <PackageTags>testing,logging,dotnet</PackageTags>
-    <PackageVersion>1.0.4</PackageVersion>
+    <PackageVersion>1.0.5</PackageVersion>
     <PackageIcon>icon.png</PackageIcon>
     <Description>A console logger for dotnet test which is cute and loud... Just like a duck!</Description>
   </PropertyGroup>

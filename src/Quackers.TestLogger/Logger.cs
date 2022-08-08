@@ -20,7 +20,6 @@ namespace Quackers.TestLogger
         public const string ExtensionUri = "logger://Microsoft/TestPlatform/QuackersLogger/v1";
 
         private ILogger _logger;
-        private readonly List<TestResultEventArgs> _errors = new();
 
         public void Initialize(TestLoggerEvents events, string testRunDirectory)
         {
@@ -130,7 +129,8 @@ namespace Quackers.TestLogger
             Console.Error.WriteLine($"WARNING: {str}".BrightRed());
         }
 
-        private static Action<string> Debug = s =>
+        // ReSharper disable once InconsistentNaming
+        private static Action<string> Debug = _ =>
         {
         };
 
@@ -214,34 +214,13 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
 
         private void OnTestRunStarted(object sender, TestRunStartEventArgs e)
         {
-            Reset();
+            _logger.Reset();
         }
 
-        private void Reset()
-        {
-            _errors.Clear();
-        }
 
         private void OnTestRunComplete(object sender, TestRunCompleteEventArgs e)
         {
-            WriteSummary();
-        }
-
-        private void WriteSummary()
-        {
-            if (_errors.Count == 0)
-            {
-                // nothing to report
-                return;
-            }
-
-            _logger.InsertBreak();
-            _logger.LogError("Failures:");
-            for (var i = 0; i < _errors.Count; i++)
-            {
-                _logger.InsertBreak();
-                LogStoredTestFailure(i + 1, _errors[i]);
-            }
+            _logger.ShowSummary();
         }
 
         private void OnTestResult(object sender, TestResultEventArgs e)
@@ -256,8 +235,7 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
                     _logger.LogPass(testName, e.Result.Duration);
                     break;
                 case TestOutcome.Failed:
-                    LogImmediateTestFailure(e);
-                    StoreError(e);
+                    _logger.LogFail(e);
                     break;
                 case TestOutcome.Skipped:
                     _logger.LogSkipped(testName, e.Result.ErrorMessage);
@@ -269,37 +247,6 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
                     throw new ArgumentOutOfRangeException();
             }
         }
-
-        private void LogImmediateTestFailure(TestResultEventArgs e, int? idx = null)
-        {
-            _logger.LogFail($"{e.Result.TestCase.FullyQualifiedName}");
-        }
-
-        private void LogStoredTestFailure(int idx, TestResultEventArgs e)
-        {
-            _logger.LogError($"[{idx}] {e.Result.TestCase.FullyQualifiedName}");
-            _logger.LogErrorMessage($"  {e.Result.ErrorMessage}");
-            foreach (var line in PrefixEachLine(e.Result.ErrorStackTrace, "  "))
-            {
-                _logger.LogStacktrace(line);
-            }
-        }
-
-        private static IEnumerable<string> PrefixEachLine(string str, string prefix)
-        {
-            str ??= "";
-            var parts = str.Split(new[] { "\n" }, StringSplitOptions.None)
-                .Select(s => s.Trim('\r'));
-            foreach (var part in parts)
-            {
-                yield return $"{prefix}{part}";
-            }
-        }
-
-        private void StoreError(TestResultEventArgs testResult)
-        {
-            _errors.Add(testResult);
-        }
     }
 
     public interface ILoggerProperties
@@ -310,6 +257,9 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
         string SkipLabel { get; set; }
         string NotFoundLabel { get; set; }
         bool NoColor { get; set; }
+        bool VerboseSummary { get; set; }
+        string SummaryStartMarker { get; set; }
+        string SummaryCompleteMarker { get; set; }
     }
 
     public interface ILogger : ILoggerProperties
@@ -317,13 +267,15 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
         void LogInfo(string str);
         void LogError(string str);
         void LogPass(string str, TimeSpan resultDuration);
-        void LogFail(string str);
+        void LogFail(TestResultEventArgs str);
         void LogNone(string str);
         void LogSkipped(string str, string reason);
         void LogNotFound(string str);
         void LogErrorMessage(string str);
         void LogStacktrace(string str);
         void InsertBreak();
+        void ShowSummary();
+        void Reset();
     }
 
     public class ConsoleLogger : ILogger
@@ -334,6 +286,84 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
         public string SkipLabel { get; set; } = "🚫";
         public string NotFoundLabel { get; set; } = "🤷";
         public bool NoColor { get; set; } = false;
+        public bool VerboseSummary { get; set; } = false;
+        public string SummaryStartMarker { get; set; }
+        public string SummaryCompleteMarker { get; set; }
+
+        private int _passed;
+        private int _skipped;
+        private int _failed;
+
+        public void ShowSummary()
+        {
+            PrintIfNotNull(SummaryStartMarker);
+            if (VerboseSummary)
+            {
+                ShowVerboseDetails();
+            }
+
+            if (_errors.Count == 0)
+            {
+                // nothing to report
+                PrintIfNotNull(SummaryCompleteMarker);
+                return;
+            }
+
+            InsertBreak();
+            LogError("Failures:");
+            for (var i = 0; i < _errors.Count; i++)
+            {
+                InsertBreak();
+                LogStoredTestFailure(i + 1, _errors[i]);
+            }
+            PrintIfNotNull(SummaryCompleteMarker);
+        }
+
+        void PrintIfNotNull(string str)
+        {
+            if (str is not null)
+            {
+                LogInfo(str);
+            }
+        }
+
+        private void ShowVerboseDetails()
+        {
+            LogInfo("\nTest results:");
+            LogInfo($"  Passed:  {_passed}");
+            LogInfo($"  Failed:  {_failed}");
+            LogInfo($"  Skipped: {_skipped}");
+            LogInfo($"  Total:   {_passed + _failed + _skipped}");
+        }
+
+        public void Reset()
+        {
+            _errors.Clear();
+            _passed = 0;
+            _skipped = 0;
+            _failed = 0;
+        }
+
+        private void LogStoredTestFailure(int idx, TestResultEventArgs e)
+        {
+            LogError($"[{idx}] {e.Result.TestCase.FullyQualifiedName}");
+            LogErrorMessage($"  {e.Result.ErrorMessage}");
+            foreach (var line in PrefixEachLine(e.Result.ErrorStackTrace, "  "))
+            {
+                LogStacktrace(line);
+            }
+        }
+        
+        private static IEnumerable<string> PrefixEachLine(string str, string prefix)
+        {
+            str ??= "";
+            var parts = str.Split(new[] { "\n" }, StringSplitOptions.None)
+                .Select(s => s.Trim('\r'));
+            foreach (var part in parts)
+            {
+                yield return $"{prefix}{part}";
+            }
+        }
 
         public void LogInfo(string str)
         {
@@ -347,8 +377,9 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
 
         public void LogPass(string str, TimeSpan resultDuration)
         {
+            _passed++;
             var duration = DurationStringFor(resultDuration);
-            Log($"{Prefix(PassLabel, str).BrightGreen()} [{DurationStringFor(resultDuration)}]");
+            Log($"{Prefix(PassLabel, str).BrightGreen()} [{duration}]");
         }
 
         private string DurationStringFor(TimeSpan resultDuration)
@@ -373,10 +404,19 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
             return $"{resultDuration}";
         }
 
-        public void LogFail(string str)
+        public void LogFail(TestResultEventArgs e)
         {
-            Log(Prefix(FailLabel, str).BrightRed());
+            Log(Prefix(FailLabel, e.Result.TestCase.FullyQualifiedName).BrightRed());
+            StoreFailure(e);
         }
+
+        private void StoreFailure(TestResultEventArgs e)
+        {
+            _failed++;
+            _errors.Add(e);
+        }
+
+        private readonly List<TestResultEventArgs> _errors = new();
 
         public void LogNone(string str)
         {
@@ -385,11 +425,13 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
 
         public void LogSkipped(string str, string reason)
         {
+            _skipped++;
             Log($"{Prefix(SkipLabel, str).Grey()} [ {reason.DarkGrey()} ]");
         }
 
         public void LogNotFound(string str)
         {
+            _skipped++;
             Log(Prefix(NotFoundLabel, str).BrightMagenta());
         }
 

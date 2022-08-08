@@ -229,6 +229,12 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
 
         private void WriteSummary()
         {
+            if (_errors.Count == 0)
+            {
+                // nothing to report
+                return;
+            }
+
             _logger.InsertBreak();
             _logger.LogError("Failures:");
             for (var i = 0; i < _errors.Count; i++)

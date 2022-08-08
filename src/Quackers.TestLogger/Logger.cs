@@ -260,6 +260,7 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
         bool VerboseSummary { get; set; }
         string SummaryStartMarker { get; set; }
         string SummaryCompleteMarker { get; set; }
+        string LogPrefix { get; set; }
     }
 
     public interface ILogger : ILoggerProperties
@@ -289,6 +290,7 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
         public bool VerboseSummary { get; set; } = false;
         public string SummaryStartMarker { get; set; }
         public string SummaryCompleteMarker { get; set; }
+        public string LogPrefix { get; set; }
 
         private int _passed;
         private int _skipped;
@@ -372,7 +374,7 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
 
         public void LogError(string str)
         {
-            Console.Error.WriteLine(str.BrightRed());
+            Console.WriteLine($"{LogPrefix}{str.BrightRed()}");
         }
 
         public void LogPass(string str, TimeSpan resultDuration)
@@ -406,7 +408,8 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
 
         public void LogFail(TestResultEventArgs e)
         {
-            Log(Prefix(FailLabel, e.Result.TestCase.FullyQualifiedName).BrightRed());
+            var duration = DurationStringFor(e.Result.Duration);
+            Log($"{Prefix(FailLabel, e.Result.TestCase.FullyQualifiedName).BrightRed()} [{duration}]");
             StoreFailure(e);
         }
 
@@ -420,7 +423,7 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
 
         public void LogNone(string str)
         {
-            Log(Prefix(NoneLabel, str).Grey());
+            Log($"{Prefix(NoneLabel, str).Grey()}");
         }
 
         public void LogSkipped(string str, string reason)
@@ -432,7 +435,7 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
         public void LogNotFound(string str)
         {
             _skipped++;
-            Log(Prefix(NotFoundLabel, str).BrightMagenta());
+            Log($"{Prefix(NotFoundLabel, str).BrightMagenta()}");
         }
 
         public void LogErrorMessage(string str)
@@ -452,7 +455,12 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
 
         private void Log(string str)
         {
-            Console.WriteLine(str);
+            var parts = str.Split('\n')
+                .Select(s => s.Trim());
+            foreach (var part in parts)
+            {
+                Console.WriteLine($"{LogPrefix}{part}");
+            }
         }
 
         private string Prefix(string prefix, string str)

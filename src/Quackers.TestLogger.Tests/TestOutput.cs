@@ -23,6 +23,7 @@ public class Tests
         private const string LOG_PREFIX = "::quackers::";
         private const string SUMMARY_START = "<summary>";
         private const string SUMMARY_COMPLETE = "</summary>";
+        private const string FAILURE_START = "-- failures --";
 
         [OneTimeSetUp]
         public void OneTimeSetup()
@@ -39,7 +40,8 @@ public class Tests
                     "outputfailuresinline=true",
                     "nonelabel=[N]",
                     $"summarystartmarker={SUMMARY_START}",
-                    $"summarycompletemarker={SUMMARY_COMPLETE}"
+                    $"summarycompletemarker={SUMMARY_COMPLETE}",
+                    $"failurestartmarker={FAILURE_START}"
                 ),
                 StdOut, StdErr);
         }
@@ -100,6 +102,18 @@ public class Tests
             Expect(summaryBlock)
                 .To.Contain.Exactly(1)
                 .Matched.By(s => s.Trim().StartsWith("Run time:"));
+            // Assert
+        }
+
+        [Test]
+        public void ShouldProvideFailureStartMarker()
+        {
+            // Arrange
+            // Act
+            var block = FindLinesBetween($"{LOG_PREFIX}{SUMMARY_START}", $"{LOG_PREFIX}{SUMMARY_COMPLETE}", StdOut);
+            Expect(block)
+                .To.Contain.Exactly(1)
+                .Equal.To($"{LOG_PREFIX}{FAILURE_START}");
             // Assert
         }
 
@@ -187,8 +201,8 @@ public class Tests
     private static void RunTestProjectWithQuackersArgs(string qargs, List<string> stdout, List<string> stderr)
     {
         var demoProject = FindDemoProject();
-        using var proc = ProcessIO.Start("dotnet", "test", "-l",
-            $"\"quackers;{qargs}\"", demoProject);
+        using var proc = ProcessIO.Start("dotnet", "test", demoProject, "-l",
+            $"quackers;{qargs}");
         if (proc.Process is null)
         {
             throw new InvalidOperationException("Unable to start 'npm run demo'");
@@ -206,20 +220,20 @@ public class Tests
             stderr.Add(line);
         }
 
-        if (DEBUG)
-#pragma warning disable CS0162
-        {
-            if (stdout.Any())
-            {
-                Console.WriteLine($"All stdout:\n{stdout.JoinWith("\n")}");
-            }
-
-            if (stderr.Any())
-            {
-                Console.WriteLine($"All stderr:\n{stderr.JoinWith("\n")}");
-            }
-        }
-#pragma warning restore CS0162
+//         if (DEBUG)
+// #pragma warning disable CS0162
+//         {
+//             if (stdout.Any())
+//             {
+//                 Console.WriteLine($"All stdout:\n{stdout.JoinWith("\n")}");
+//             }
+//
+//             if (stderr.Any())
+//             {
+//                 Console.WriteLine($"All stderr:\n{stderr.JoinWith("\n")}");
+//             }
+//         }
+// #pragma warning restore CS0162
 
         proc.Process.WaitForExit();
     }

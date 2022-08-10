@@ -260,6 +260,7 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
         bool VerboseSummary { get; set; }
         string SummaryStartMarker { get; set; }
         string SummaryCompleteMarker { get; set; }
+        string FailureStartMarker { get; set; }
         string LogPrefix { get; set; }
         bool OutputFailuresInline { get; set; }
     }
@@ -292,6 +293,7 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
         public bool OutputFailuresInline { get; set; } = false;
         public string SummaryStartMarker { get; set; }
         public string SummaryCompleteMarker { get; set; }
+        public string FailureStartMarker { get; set; }
         public string LogPrefix { get; set; }
 
         private int _passed;
@@ -314,6 +316,7 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
             }
 
             InsertBreak();
+            PrintIfNotNull(FailureStartMarker);
             LogError("Failures:");
             for (var i = 0; i < _errors.Count; i++)
             {

@@ -26,7 +26,7 @@ namespace QuackersTestHost
             // Arrange
             // Act
             Expect(true)
-                .To.Be.False();
+                .To.Be.False("this test should fail");
             // Assert
         }
 

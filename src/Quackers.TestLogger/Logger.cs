@@ -261,6 +261,7 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
         string SummaryStartMarker { get; set; }
         string SummaryCompleteMarker { get; set; }
         string LogPrefix { get; set; }
+        bool OutputFailuresInline { get; set; }
     }
 
     public interface ILogger : ILoggerProperties
@@ -288,7 +289,7 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
         public string NotFoundLabel { get; set; } = "🤷";
         public bool NoColor { get; set; } = false;
         public bool VerboseSummary { get; set; } = false;
-        public bool OutputFailuresImmediately { get; set; } = false;
+        public bool OutputFailuresInline { get; set; } = false;
         public string SummaryStartMarker { get; set; }
         public string SummaryCompleteMarker { get; set; }
         public string LogPrefix { get; set; }
@@ -354,12 +355,19 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
         private void LogStoredTestFailure(int idx, TestResultEventArgs e)
         {
             LogError($"[{idx}] {e.Result.TestCase.FullyQualifiedName}");
-            LogErrorMessage($"  {e.Result.ErrorMessage}");
-            foreach (var line in PrefixEachLine(e.Result.ErrorStackTrace, "  "))
+            foreach (var line in PrefixEachLine(e.Result.ErrorMessage, STORED_TEST_FAILURE_INDENT))
+            {
+                LogErrorMessage(line);
+            }
+
+            foreach (var line in PrefixEachLine(e.Result.ErrorStackTrace, STORED_TEST_FAILURE_INDENT))
             {
                 LogStacktrace(line);
             }
         }
+        
+        private const string STORED_TEST_FAILURE_INDENT = "  ";
+        private const string IMMEDIATE_TEST_FAILURE_INDENT = "    ";
 
         private static IEnumerable<string> PrefixEachLine(string str, string prefix)
         {
@@ -382,11 +390,14 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
             Console.WriteLine($"{LogPrefix}{str.BrightRed()}");
         }
 
-        private void LogImmediateTestFailure(TestResultEventArgs e)
+        private void LogInlineTestFailure(TestResultEventArgs e)
         {
-            LogError($"  {e.Result.TestCase.FullyQualifiedName}");
-            LogErrorMessage($"    {e.Result.ErrorMessage}");
-            foreach (var line in PrefixEachLine(e.Result.ErrorStackTrace, "    "))
+            foreach (var line in PrefixEachLine(e.Result.ErrorMessage, IMMEDIATE_TEST_FAILURE_INDENT))
+            {
+                LogErrorMessage(line);
+            }
+
+            foreach (var line in PrefixEachLine(e.Result.ErrorStackTrace, IMMEDIATE_TEST_FAILURE_INDENT))
             {
                 LogStacktrace(line);
             }
@@ -425,9 +436,9 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
         {
             var duration = DurationStringFor(e.Result.Duration);
             Log($"{Prefix(FailLabel, e.Result.TestCase.FullyQualifiedName).BrightRed()} [{duration}]");
-            if (OutputFailuresImmediately)
+            if (OutputFailuresInline)
             {
-                LogImmediateTestFailure(e);
+                LogInlineTestFailure(e);
             }
 
             StoreFailure(e);
@@ -471,7 +482,7 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
 
         public void InsertBreak()
         {
-            Console.WriteLine("");
+            Console.WriteLine($"{LogPrefix}");
         }
 
         private void Log(string str)

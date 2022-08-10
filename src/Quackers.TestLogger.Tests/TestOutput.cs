@@ -36,11 +36,26 @@ public class Tests
                     "nonelabel=[N]",
                     "verbosesummary=true",
                     "nocolor=true",
+                    "outputfailuresinline=true",
                     "nonelabel=[N]",
                     $"summarystartmarker={SUMMARY_START}",
                     $"summarycompletemarker={SUMMARY_COMPLETE}"
                 ),
                 StdOut, StdErr);
+        }
+
+        [Test]
+        public void ShouldNotWarn()
+        {
+            // Arrange
+            // Act
+            Expect(StdOut)
+                .Not.To.Contain.Any
+                .Matched.By(s => s.Contains("WARNING:"));
+            Expect(StdErr)
+                .Not.To.Contain.Any
+                .Matched.By(s => s.Contains("WARNING:"));
+            // Assert
         }
 
         [Test]
@@ -65,10 +80,11 @@ public class Tests
             Expect(StdOut)
                 .To.Contain.Exactly(1)
                 .Starting.With($"{LOG_PREFIX}{SUMMARY_COMPLETE}");
-            var summaryBlock = FindLinesBetween($"{LOG_PREFIX}{SUMMARY_START}", $"{LOG_PREFIX}{SUMMARY_COMPLETE}", StdOut)
-                .Where(line => line.Length > LOG_PREFIX.Length)
-                .Select(line => line.Substring(LOG_PREFIX.Length))
-                .ToArray();
+            var summaryBlock =
+                FindLinesBetween($"{LOG_PREFIX}{SUMMARY_START}", $"{LOG_PREFIX}{SUMMARY_COMPLETE}", StdOut)
+                    .Where(line => line.Length > LOG_PREFIX.Length)
+                    .Select(line => line.Substring(LOG_PREFIX.Length))
+                    .ToArray();
             Expect(summaryBlock)
                 .To.Contain.Exactly(1)
                 .Matched.By(s => s.Trim().StartsWith("Passed:"));
@@ -84,6 +100,27 @@ public class Tests
             Expect(summaryBlock)
                 .To.Contain.Exactly(1)
                 .Matched.By(s => s.Trim().StartsWith("Run time:"));
+            // Assert
+        }
+
+        [Test]
+        public void ShouldIncludeFailureOutputOnDemand()
+        {
+            // Arrange
+            // Act
+            var testLine = StdOut
+                .Where(s => s.StartsWith(LOG_PREFIX))
+                .FirstOrDefault(s => s.Contains("[F] QuackersTestHost.SomeTests.ShouldFail"));
+            Expect(testLine)
+                .Not.To.Be.Null();
+            var interesting = FindLinesBetween(
+                s => s.StartsWith(testLine),
+                s => !s.StartsWith(LOG_PREFIX),
+                StdOut
+            );
+            Expect(interesting)
+                .To.Contain.Exactly(1)
+                .Containing("this test should fail");
             // Assert
         }
     }
@@ -170,6 +207,7 @@ public class Tests
         }
 
         if (DEBUG)
+#pragma warning disable CS0162
         {
             if (stdout.Any())
             {
@@ -181,6 +219,7 @@ public class Tests
                 Console.WriteLine($"All stderr:\n{stderr.JoinWith("\n")}");
             }
         }
+#pragma warning restore CS0162
 
         proc.Process.WaitForExit();
     }
@@ -209,19 +248,36 @@ public class Tests
         throw new InvalidOperationException("Can't find the demo project");
     }
 
-    private static string[] FindLinesBetween(string start, string end, IEnumerable<string> lines)
+    private static string[] FindLinesBetween(
+        string start,
+        string end,
+        IEnumerable<string> lines
+    )
+    {
+        return FindLinesBetween(
+            s => s.StartsWith(start),
+            s => s.StartsWith(end),
+            lines
+        );
+    }
+
+    private static string[] FindLinesBetween(
+        Func<string, bool> startMatcher,
+        Func<string, bool> endMatcher,
+        IEnumerable<string> lines
+    )
     {
         var result = new List<string>();
         var inBlock = false;
         foreach (var line in lines)
         {
-            if (line.StartsWith(start))
+            if (startMatcher(line))
             {
                 inBlock = true;
                 continue;
             }
 
-            if (line.StartsWith(end))
+            if (endMatcher(line))
             {
                 inBlock = false;
                 continue;

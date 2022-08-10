@@ -78,5 +78,16 @@ namespace QuackersTestHost
                 .To.Equal(2);
             // Assert
         }
+
+        [Test]
+        [Explicit("integration test")]
+        public void ExplicitTest()
+        {
+            // Arrange
+            // Act
+            Expect(1)
+                .To.Equal(2);
+            // Assert
+        }
     }
 }

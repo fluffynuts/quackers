@@ -6,6 +6,7 @@
     "test": "run-s \"zarro test-dotnet\"",
     "build": "run-s \"zarro build\"",
     "demo": "dotnet test -l quackers src/Demo/Demo.csproj",
+    "noisy-demo": "dotnet test -l \"quackers;verboseSummary=1;summaryStartMarker=::start summary::;summaryCompleteMarker=::end summary::;logprefix=::quackers log::\" src/Demo/Demo.csproj",
     "prerelease": "run-s test",
     "release": "cross-env PACK_INCREMENT_VERSION=1 BUILD_CONFIGURATION=Release run-s \"zarro release\"",
     "zarro": "cross-env DOTNET_CORE=1 PACK_INCLUDE_CSPROJ=**/Quackers.TestLogger.csproj zarro"

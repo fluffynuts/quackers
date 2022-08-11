@@ -10,9 +10,95 @@ using static NExpect.Expectations;
 
 namespace Quackers.TestLogger.Tests;
 
-public class Tests
+[TestFixture]
+public class IntegrationTests
 {
     private const bool DEBUG = false;
+
+    [TestFixture]
+    public class PrefixingTestNames
+    {
+        private const string LOG_PREFIX = "::pre::";
+        private const string SUMMARY_START = "::sum::";
+        private const string SUMMARY_COMPLETE = "::end::";
+        private const string FAILURE_START = "::le_fail::";
+        private const string TEST_NAME_PREFIX = "Foo.Bar.";
+        private static readonly List<string> StdOut = new();
+        private static readonly List<string> StdErr = new();
+
+        [OneTimeSetUp]
+        public void OneTimeSetup()
+        {
+            RunTestProjectWithQuackersArgs(
+                string.Join(";",
+                    $"testnameprefix={TEST_NAME_PREFIX}",
+                    "passlabel=[P]",
+                    "faillabel=[F]",
+                    "skiplabel=[S]",
+                    "nonelabel=[N]",
+                    "verbosesummary=true",
+                    "nocolor=true",
+                    "outputfailuresinline=true",
+                    "nonelabel=[N]",
+                    $"summarystartmarker={SUMMARY_START}",
+                    $"summarycompletemarker={SUMMARY_COMPLETE}",
+                    $"failurestartmarker={FAILURE_START}"
+                ), StdOut, StdErr
+            );
+        }
+
+        [Test]
+        public void ShouldPrefixPass()
+        {
+            // Arrange
+            // Act
+            Expect(StdOut)
+                .To.Contain.Exactly(1)
+                .Starting.With($"[P] {TEST_NAME_PREFIX}QuackersTestHost.SomeTests.LongerPasses(1)");
+            // Assert
+        }
+
+        [Test]
+        public void ShouldPrefixFail()
+        {
+            // Arrange
+            Expect(StdOut)
+                .To.Contain.Exactly(1)
+                .Starting.With($"[F] {TEST_NAME_PREFIX}QuackersTestHost.SomeTests.ShouldFail");
+            // Act
+            // Assert
+        }
+
+        [Test]
+        public void ShouldPrefixSkip()
+        {
+            // Arrange
+            // Act
+            Expect(StdOut)
+                .To.Contain.Exactly(1)
+                .Starting.With($"[S] {TEST_NAME_PREFIX}QuackersTestHost.SomeTests.SkippyTesty [ skipped because... ]");
+            // Assert
+        }
+
+        [Test]
+        public void ShouldPrefixNone()
+        {
+            // this is how NUnit reports explicit tests
+            var expected = $"[N] {TEST_NAME_PREFIX}QuackersTestHost.SomeTests.ExplicitTest [ integration test ]";
+            // Arrange
+            Expect(StdOut)
+                .To.Contain.Exactly(1)
+                .Starting.With(
+                    expected,
+                    () => $@"Looking for:
+{expected}
+But explicit test line is:
+{StdOut.FirstOrDefault(s => s.Contains("ExplicitTest"))}"
+                );
+            // Act
+            // Assert
+        }
+    }
 
     [TestFixture]
     public class ZarroUsage
@@ -220,20 +306,20 @@ public class Tests
             stderr.Add(line);
         }
 
-//         if (DEBUG)
-// #pragma warning disable CS0162
-//         {
-//             if (stdout.Any())
-//             {
-//                 Console.WriteLine($"All stdout:\n{stdout.JoinWith("\n")}");
-//             }
-//
-//             if (stderr.Any())
-//             {
-//                 Console.WriteLine($"All stderr:\n{stderr.JoinWith("\n")}");
-//             }
-//         }
-// #pragma warning restore CS0162
+        if (DEBUG)
+#pragma warning disable CS0162
+        {
+            if (stdout.Any())
+            {
+                Console.WriteLine($"All stdout:\n{stdout.JoinWith("\n")}");
+            }
+
+            if (stderr.Any())
+            {
+                Console.WriteLine($"All stderr:\n{stderr.JoinWith("\n")}");
+            }
+        }
+#pragma warning restore CS0162
 
         proc.Process.WaitForExit();
     }

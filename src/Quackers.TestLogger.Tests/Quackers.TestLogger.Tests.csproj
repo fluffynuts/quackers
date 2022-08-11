@@ -18,4 +18,8 @@
     <PackageReference Include="PeanutButter.Utils" Version="3.0.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Quackers.TestLogger\Quackers.TestLogger.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -124,6 +124,20 @@ public class IntegrationTests
         }
 
         [Test]
+        public void ShouldPrefixFailSummaryPart()
+        {
+            // Arrange
+            var block = FindLinesBetween(FAILURE_START, SUMMARY_COMPLETE, StdOut);
+            // Act
+            var line = block.FirstOrDefault(l => l.Contains("QuackersTestHost.SomeTests.ShouldFail"));
+            // Assert
+            Expect(line)
+                .Not.To.Be.Null("Should have a failure summary for the failed test");
+            Expect(line)
+                .To.Contain(TEST_NAME_PREFIX);
+        }
+
+        [Test]
         public void ShouldPrefixSkip()
         {
             // Arrange

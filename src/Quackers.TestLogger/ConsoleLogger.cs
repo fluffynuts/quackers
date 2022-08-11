@@ -88,7 +88,7 @@ namespace Quackers.TestLogger
         private void LogStoredTestFailure(int idx, TestResultEventArgs e)
         {
             var idxPart = FailureIndexPlaceholder ?? $"[{idx}]";
-            LogError($"{idxPart} {e.Result.TestCase.FullyQualifiedName}");
+            LogError($"{idxPart} {TestNameFor(e)}");
             foreach (var line in PrefixEachLine(e.Result.ErrorMessage, STORED_TEST_FAILURE_INDENT))
             {
                 LogErrorMessage(line);

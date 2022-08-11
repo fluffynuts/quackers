@@ -7,8 +7,8 @@ namespace Quackers.TestLogger
 {
     public class ConsoleLogger : ILogger
     {
-        public string PassLabel { get; set; } = "✔";
-        public string FailLabel { get; set; } = "❌";
+        public string PassLabel { get; set; } = "✅";
+        public string FailLabel { get; set; } = "🛑";
         public string NoneLabel { get; set; } = "❓";
         public string SkipLabel { get; set; } = "🚫";
         public string NotFoundLabel { get; set; } = "🤷";

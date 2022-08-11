@@ -20,6 +20,7 @@ namespace Quackers.TestLogger
         public string FailureStartMarker { get; set; }
         public string LogPrefix { get; set; }
         public string TestNamePrefix { get; set; }
+        public string FailureIndexPlaceholder { get; set; }
 
         private int _passed;
         private int _skipped;
@@ -42,7 +43,11 @@ namespace Quackers.TestLogger
 
             InsertBreak();
             PrintIfNotNull(FailureStartMarker);
-            LogError("Failures:");
+            if (FailureStartMarker is null)
+            {
+                LogError("Failures:");
+            }
+
             for (var i = 0; i < _errors.Count; i++)
             {
                 InsertBreak();
@@ -82,7 +87,8 @@ namespace Quackers.TestLogger
 
         private void LogStoredTestFailure(int idx, TestResultEventArgs e)
         {
-            LogError($"[{idx}] {e.Result.TestCase.FullyQualifiedName}");
+            var idxPart = FailureIndexPlaceholder ?? $"[{idx}]";
+            LogError($"{idxPart} {e.Result.TestCase.FullyQualifiedName}");
             foreach (var line in PrefixEachLine(e.Result.ErrorMessage, STORED_TEST_FAILURE_INDENT))
             {
                 LogErrorMessage(line);

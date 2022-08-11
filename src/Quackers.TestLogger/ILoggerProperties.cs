@@ -7,13 +7,16 @@ namespace Quackers.TestLogger
         string NoneLabel { get; set; }
         string SkipLabel { get; set; }
         string NotFoundLabel { get; set; }
+        
         bool NoColor { get; set; }
         bool VerboseSummary { get; set; }
+        bool OutputFailuresInline { get; set; }
+        
         string SummaryStartMarker { get; set; }
         string SummaryCompleteMarker { get; set; }
         string FailureStartMarker { get; set; }
         string LogPrefix { get; set; }
-        bool OutputFailuresInline { get; set; }
         string TestNamePrefix { get; set; }
+        string FailureIndexPlaceholder { get; set; }
     }
 }

@@ -20,6 +20,7 @@ namespace Quackers.TestLogger.Tests
         [TestCase("LogPrefix", typeof(string))]
         [TestCase("OutputFailuresInline", typeof(bool))]
         [TestCase("TestNamePrefix", typeof(string))]
+        [TestCase("FailureIndexPlaceholder", typeof(string))]
         public void ShouldHaveProperty_(string name, Type type)
         {
             // Arrange

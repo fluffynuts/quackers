@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using PeanutButter.Utils;
 using NUnit.Framework;
 using NExpect;
@@ -16,9 +17,62 @@ public class IntegrationTests
     private const bool DEBUG = false;
 
     [TestFixture]
+    public class FailurePlaceholdersInsteadOfFailureIndexes
+    {
+        private const string SUMMARY_START = "::sum::";
+        private const string SUMMARY_COMPLETE = "::end::";
+        private const string FAILURE_START = "::le_fail::";
+        private const string FAILURE_INDEX_PLACEHOLDER = "::#::";
+        private static readonly List<string> StdOut = new();
+        private static readonly List<string> StdErr = new();
+
+        [OneTimeSetUp]
+        public void OneTimeSetup()
+        {
+            RunTestProjectWithQuackersArgs(
+                string.Join(";",
+                    $"failureIndexPlaceholder={FAILURE_INDEX_PLACEHOLDER}",
+                    "passlabel=[P]",
+                    "faillabel=[F]",
+                    "skiplabel=[S]",
+                    "nonelabel=[N]",
+                    "verbosesummary=true",
+                    "nocolor=true",
+                    "outputfailuresinline=true",
+                    "nonelabel=[N]",
+                    $"summarystartmarker={SUMMARY_START}",
+                    $"summarycompletemarker={SUMMARY_COMPLETE}",
+                    $"failurestartmarker={FAILURE_START}"
+                ), StdOut, StdErr
+            );
+        }
+
+        [Test]
+        public void ShouldUsePlaceholderOnDemand()
+        {
+            // Arrange
+            // Act
+            var summaryBlock = FindLinesBetween(
+                SUMMARY_START,
+                SUMMARY_COMPLETE,
+                StdOut
+            );
+            var line = summaryBlock.FirstOrDefault(
+                l => l.Contains("QuackersTestHost.SomeTests.ShouldFail")
+            );
+            // Assert
+            Expect(line)
+                .Not.To.Be.Null(
+                    "Should have a failure summary for the ShouldFail test"
+                );
+            Expect(line)
+                .Not.To.Match(new Regex("\\[\\d+\\]"));
+        }
+    }
+
+    [TestFixture]
     public class PrefixingTestNames
     {
-        private const string LOG_PREFIX = "::pre::";
         private const string SUMMARY_START = "::sum::";
         private const string SUMMARY_COMPLETE = "::end::";
         private const string FAILURE_START = "::le_fail::";
@@ -200,6 +254,12 @@ But explicit test line is:
             Expect(block)
                 .To.Contain.Exactly(1)
                 .Equal.To($"{LOG_PREFIX}{FAILURE_START}");
+            Expect(block)
+                .To.Contain.None
+                .Matched.By(
+                    s => s.Contains("Failures:"),
+                    $"Should excluded the Failures label when the {nameof(ILogger.FailureStartMarker)} prop is set"
+                );
             // Assert
         }
 

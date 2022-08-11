@@ -28,6 +28,6 @@
   },
   "homepage": "https://github.com/fluffynuts/quackers#readme",
   "devDependencies": {
-    "zarro": "^1.106.24"
+    "zarro": "^1.108.0"
   }
 }

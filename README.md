@@ -1,6 +1,10 @@
 Quackers - a cute, noisy console logger for dotnet test
 ---
 
+![A duck quacking loudly](quack.png "A duck quacking loudly")
+
+_[ image credits: https://www.instagram.com/adrawingattempt ]_
+
 Why?
 ---
 

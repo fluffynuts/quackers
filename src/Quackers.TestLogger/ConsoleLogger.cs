@@ -12,13 +12,30 @@ namespace Quackers.TestLogger
         public string NoneLabel { get; set; } = "❓";
         public string SkipLabel { get; set; } = "🚫";
         public string NotFoundLabel { get; set; } = "🤷";
+        
         public bool NoColor { get; set; } = false;
+
+        public string Theme
+        {
+            get => _theme;
+            set => SetTheme(value);
+        }
+
+        private void SetTheme(string value)
+        {
+            _theme = value;
+            StringColorExtensions.ThemeName = value;
+        }
+
+        private string _theme = "default";
         public bool VerboseSummary { get; set; } = false;
         public bool OutputFailuresInline { get; set; } = false;
+        public bool ShowHelp { get; set; } = true;
+
+        public string LogPrefix { get; set; }
         public string SummaryStartMarker { get; set; }
         public string SummaryCompleteMarker { get; set; }
         public string FailureStartMarker { get; set; }
-        public string LogPrefix { get; set; }
         public string TestNamePrefix { get; set; }
         public string FailureIndexPlaceholder { get; set; }
 
@@ -121,14 +138,14 @@ namespace Quackers.TestLogger
 
         public void LogError(string str)
         {
-            Console.WriteLine($"{LogPrefix}{str.BrightRed()}");
+            Console.WriteLine($"{LogPrefix}{str.Fail()}");
         }
 
         private void LogInlineTestFailure(TestResultEventArgs e)
         {
             foreach (var line in PrefixEachLine(e.Result.ErrorMessage, IMMEDIATE_TEST_FAILURE_INDENT))
             {
-                LogErrorMessage(line);
+                LogErrorMessage($"inline err: {line}");
             }
 
             foreach (var line in PrefixEachLine(e.Result.ErrorStackTrace, IMMEDIATE_TEST_FAILURE_INDENT))
@@ -142,7 +159,7 @@ namespace Quackers.TestLogger
             _passed++;
             var duration = DurationStringFor(e.Result.Duration);
             var str = TestNameFor(e);
-            Log($"{Prefix(PassLabel, str).BrightGreen()} [{duration}]");
+            Log($"{Prefix(PassLabel, str).Pass()} [{duration}]");
         }
 
         private string TestNameFor(TestResultEventArgs e)
@@ -175,7 +192,7 @@ namespace Quackers.TestLogger
         public void LogFail(TestResultEventArgs e)
         {
             var duration = DurationStringFor(e.Result.Duration);
-            Log($"{Prefix(FailLabel, TestNameFor(e)).BrightRed()} [{duration}]");
+            Log($"{Prefix(FailLabel, TestNameFor(e)).Fail()} [{duration}]");
             if (OutputFailuresInline)
             {
                 LogInlineTestFailure(e);
@@ -197,7 +214,7 @@ namespace Quackers.TestLogger
         {
             var name = TestNameFor(e);
             var reason = e.Result.ErrorMessage;
-            Log($"{Prefix(NoneLabel, name).Grey()} [ {reason.DarkGrey()} ]");
+            Log($"{Prefix(NoneLabel, name).Disabled()} [ {reason.DisabledReason()} ]");
         }
 
         public void LogSkipped(TestResultEventArgs e)
@@ -205,24 +222,24 @@ namespace Quackers.TestLogger
             _skipped++;
             var str = TestNameFor(e);
             var reason = e.Result.ErrorMessage;
-            Log($"{Prefix(SkipLabel, str).Grey()} [ {reason.DarkGrey()} ]");
+            Log($"{Prefix(SkipLabel, str).Disabled()} [ {reason.DisabledReason()} ]");
         }
 
         public void LogNotFound(TestResultEventArgs e)
         {
             _skipped++;
             var str = TestNameFor(e);
-            Log($"{Prefix(NotFoundLabel, str).BrightMagenta()}");
+            Log($"{Prefix(NotFoundLabel, str).Error()}");
         }
 
         public void LogErrorMessage(string str)
         {
-            Log(str.BrightMagenta());
+            Log(str.Error());
         }
 
         public void LogStacktrace(string str)
         {
-            Log(str.BrightCyan());
+            Log(str.StackTrace());
         }
 
         public void InsertBreak()

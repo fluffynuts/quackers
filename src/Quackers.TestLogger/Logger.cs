@@ -37,7 +37,7 @@ namespace Quackers.TestLogger
                 if (_logger.NoColor)
                 {
                     Debug("Disabling color output");
-                    StringExtensions.DisableColor = true;
+                    StringColorExtensions.DisableColor = true;
                 }
 
                 SubscribeToEvents(events);
@@ -55,12 +55,18 @@ namespace Quackers.TestLogger
                 var shouldDebug = TruthyValues.Contains(result?.ToLower());
                 if (shouldDebug)
                 {
-                    Debug = s => Console.WriteLine($"DEBUG: {s}".BrightBlue());
+                    Debug = s => Console.WriteLine($"DEBUG: {s}".Debug());
                 }
             }
         }
 
-        private static readonly HashSet<string> TruthyValues = new(new[] { "yes", "true", "1", "on" });
+        private static readonly HashSet<string> TruthyValues = new(
+            new[] { "yes", "true", "1", "on", "enable" }
+        );
+
+        private static readonly HashSet<string> FalsyValues = new(
+            new[] { "no", "false", "0", "off", "disable" }
+        );
 
         private static void DumpException(Exception ex, [CallerMemberName] string caller = null)
         {
@@ -72,6 +78,7 @@ namespace Quackers.TestLogger
             var envVars = Environment.GetEnvironmentVariables();
             var keys = envVars.Keys;
             var foundInvalid = false;
+            var helpParameterProvided = false;
             foreach (string key in keys)
             {
                 if (!key.StartsWith(ENVIRONMENT_VARIABLE_PREFIX, StringComparison.OrdinalIgnoreCase))
@@ -92,14 +99,40 @@ namespace Quackers.TestLogger
 
                 var envValue = Environment.GetEnvironmentVariable(key);
                 SetLoggerProp(prop, envValue);
+                if (prop.Name == nameof(ILoggerProperties.ShowHelp))
+                {
+                    helpParameterProvided = true;
+                }
             }
 
-            if (foundInvalid)
+            // show help if explicitly asked for or if not provided (defaults true) and an error was found
+            var shouldShowHelp =
+                (foundInvalid && _logger.ShowHelp) ||
+                (helpParameterProvided && _logger.ShowHelp);
+            if (shouldShowHelp)
             {
-                Warn(
-                    $"Valid quackers environment variables are:\n- {string.Join("\n- ", LoggerOptionPropMap.Keys.Select(k => $"QUACKERS_{k.ToUpper()}"))}");
+                Warn($@"Quackers configuration help:
+- {string.Join("\n- ", LoggerOptionPropMap.Keys.Select(k => $"QUACKERS_{k.ToUpper()} : {HelpFor(k)}"))}
+
+Flags can be set on with one of:  {string.Join(",", TruthyValues)}
+Flags can be set off with one of: {string.Join(",", FalsyValues)}
+"
+                );
             }
         }
+
+        private static string HelpFor(string loggerProp)
+        {
+            if (!LoggerOptionPropMap.TryGetValue(loggerProp, out var propertyInfo))
+            {
+                return NO_HELP;
+            }
+
+            return propertyInfo.GetCustomAttributes(true).OfType<HelpAttribute>()
+                .FirstOrDefault()?.Help ?? NO_HELP;
+        }
+
+        private const string NO_HELP = "(no help available)";
 
         private void SetLoggerProp(PropertyInfo prop, string value)
         {
@@ -115,9 +148,24 @@ namespace Quackers.TestLogger
                 return;
             }
 
+
             if (prop.PropertyType == typeof(bool))
             {
-                prop.SetValue(_logger, TruthyValues.Contains(value));
+                var isTrue = TruthyValues.Contains(value);
+                var isFalse = FalsyValues.Contains(value);
+                if (isTrue)
+                {
+                    prop.SetValue(_logger, true);
+                }
+                else if (isFalse)
+                {
+                    prop.SetValue(_logger, false);
+                }
+                else
+                {
+                    Warn($"Invalid flag value '{value}' specified for '{prop.Name}'");
+                }
+
                 return;
             }
 
@@ -126,7 +174,7 @@ namespace Quackers.TestLogger
 
         private static void Warn(string str)
         {
-            Console.Error.WriteLine($"WARNING: {str}".BrightRed());
+            Console.Error.WriteLine($"WARNING: {str}".Fail());
         }
 
         // ReSharper disable once InconsistentNaming

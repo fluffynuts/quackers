@@ -12,7 +12,8 @@
     "zarro-demo-darker": "cross-env QUACKERS_THEME=darker DOTNET_CORE=1 TEST_INCLUDE=Demo \"zarro test-dotnet\"",
     "zarro-test": "cross-env DOTNET_CORE=1 TEST_INCLUDE=src/Demo/Demo DOTNET_TEST_PREFIXES=Demo:LePrefix. run-s \"zarro test-dotnet\"",
     "noisy-demo": "dotnet test -l \"quackers;verboseSummary=1;summaryStartMarker=::start summary::;summaryCompleteMarker=::end summary::;logprefix=::quackers log::;outputfailuresimmediately=true\" src/Demo/Demo.csproj",
-    "prerelease": "rimraf packages",
+    "prerelease": "run-p clean-packages test",
+    "clean-packages": "rimraf packages",
     "release": "cross-env PACK_INCREMENT_VERSION=1 BUILD_CONFIGURATION=Release run-s \"zarro release\"",
     "zarro": "cross-env DOTNET_CORE=1 PACK_INCLUDE_CSPROJ=**/Quackers.TestLogger.csproj zarro"
   },

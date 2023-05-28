@@ -15,7 +15,7 @@ namespace Quackers.TestLogger
         [Help("The prefix label to show for a test that was discovered but later not found, default '🤷'")]
         string NotFoundLabel { get; set; }
         
-        [Help("Disable color in outputs (eg for CI), default off")]
+        [Help("Disable color in outputs (eg for CI), default off, unless the NO_COLOR environment variable is set")]
         bool NoColor { get; set; }
 
         [Help("Theme for color output, default works well on a dark background")]

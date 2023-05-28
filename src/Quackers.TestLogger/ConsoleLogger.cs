@@ -13,7 +13,8 @@ namespace Quackers.TestLogger
         public string SkipLabel { get; set; } = "🚫";
         public string NotFoundLabel { get; set; } = "🤷";
         
-        public bool NoColor { get; set; } = false;
+        public bool NoColor { get; set; } 
+            = Environment.GetEnvironmentVariable("NO_COLOR") is not null;
 
         public string Theme
         {

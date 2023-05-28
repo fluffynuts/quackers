@@ -70,6 +70,27 @@ public class IntegrationTests
         }
     }
 
+    [TestCase("NO_COLOR", "1", true)]
+    [TestCase("NO_COLOR", null, false)]
+    [TestCase("NO_COLOR", "", false)]
+    public void ShouldRespectEnvironmentVariable_(
+        string envVar,
+        string value,
+        bool expected
+    )
+    {
+        // Arrange
+        using var _ = new AutoTempEnvironmentVariable(envVar, value);
+        // Act
+        
+        var sut = new ConsoleLogger();
+        var result = sut.NoColor;
+        
+        // Assert
+        Expect(result)
+            .To.Equal(expected);
+    }
+
     [TestFixture]
     public class PrefixingTestNames
     {

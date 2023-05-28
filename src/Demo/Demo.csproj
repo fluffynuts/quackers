@@ -11,7 +11,7 @@
     <PackageReference Include="NExpect" Version="1.0.274" />
     <PackageReference Include="NUnit" Version="3.13.3" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
-    <PackageReference Include="PeanutButter.RandomGenerators" Version="3.0.4" />
+    <PackageReference Include="PeanutButter.RandomGenerators" Version="3.0.140" />
   </ItemGroup>
 
   <ItemGroup>

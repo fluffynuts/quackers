@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using PeanutButter.Utils;
 using NUnit.Framework;
 using NExpect;
+using NuGet.Versioning;
 using NUnit.Framework.Interfaces;
 using static NExpect.Expectations;
 
@@ -485,5 +486,18 @@ But explicit test line is:
         }
 
         return result.ToArray();
+    }
+}
+
+[TestFixture]
+public class NugetVersioningFun
+{
+    [Test]
+    public void NAME()
+    {
+        // Arrange
+        NuGetVersion.TryParse("1.0.13-2306061708-3a8d691", out var parsed);
+        // Act
+        // Assert
     }
 }

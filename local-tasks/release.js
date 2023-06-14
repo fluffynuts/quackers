@@ -5,7 +5,6 @@ const gulp = requireModule("gulp-with-help"),
   runSequence = requireModule("run-sequence"),
   nugetPush = requireModule("nuget-push"),
   env = requireModule("env");
-spawn = requireModule("spawn");
 
 env.associate(["DRY_RUN"], ["push"]);
 

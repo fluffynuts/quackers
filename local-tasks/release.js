@@ -3,10 +3,11 @@ const gulp = requireModule("gulp-with-help"),
   path = require("path"),
   fs = require("fs"),
   runSequence = requireModule("run-sequence"),
+  /** @type NugetPush */
   nugetPush = requireModule("nuget-push"),
   env = requireModule("env");
 
-env.associate(["DRY_RUN"], ["push"]);
+env.associate([ "DRY_RUN" ], [ "push" ]);
 
 gulp.task("release", done => {
   runSequence("pack", "push", "commit-release", "tag-and-push", done);
@@ -14,9 +15,9 @@ gulp.task("release", done => {
 
 gulp.task("push", "pushes packages to nuget.org", () => {
   const packages = [
-    findNupkg("Quackers.TestLogger"),
-  ].flat();
-  promises = packages.map(pushPackage);
+      findNupkg("Quackers.TestLogger"),
+    ].flat(),
+    promises = packages.map(p => nugetPush(p));
   return Promise.all(promises);
 });
 
@@ -29,7 +30,7 @@ function findPackage(id, ext) {
     .readdirSync(packageDir)
     .filter(p => p.endsWith(`.${ext}`))
     .filter(p => {
-      var parts = p
+      const parts = p
         .split(".")
         .filter(part => part !== ext && isNaN(parseInt(part)));
       return parts.join(".") === id;
@@ -37,8 +38,4 @@ function findPackage(id, ext) {
     .map(p => path.join(packageDir, p))
     .sort()
     .reverse()[0];
-}
-
-function pushPackage(package) {
-  return nugetPush(package);
 }

@@ -10,7 +10,7 @@ const gulp = requireModule("gulp-with-help"),
 env.associate([ "DRY_RUN" ], [ "push" ]);
 
 gulp.task("release", done => {
-  runSequence("pack", "push", "commit-release", "tag-and-push", done);
+  runSequence("test", "pack", "push", "commit-release", "tag-and-push", done);
 });
 
 gulp.task("push", "pushes packages to nuget.org", () => {

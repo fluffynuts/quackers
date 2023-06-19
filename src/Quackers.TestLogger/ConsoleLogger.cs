@@ -146,7 +146,7 @@ namespace Quackers.TestLogger
         {
             foreach (var line in PrefixEachLine(e.Result.ErrorMessage, IMMEDIATE_TEST_FAILURE_INDENT))
             {
-                LogErrorMessage($"inline err: {line}");
+                LogErrorMessage(line);
             }
 
             foreach (var line in PrefixEachLine(e.Result.ErrorStackTrace, IMMEDIATE_TEST_FAILURE_INDENT))

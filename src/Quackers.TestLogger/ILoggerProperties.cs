@@ -20,6 +20,12 @@ namespace Quackers.TestLogger
 
         [Help("Theme for color output, default works well on a dark background")]
         string Theme { get; set; }
+        
+        [Help("Flag: highlight slow tests in the output")]
+        bool HighlightSlowTests { get; set; }
+        [Help("Consider a test 'slow' when it exceeds a runtime of this many milliseconds")]
+        int SlowTestThresholdMs { get; set; }
+        
 
         bool VerboseSummary { get; set; }
         bool OutputFailuresInline { get; set; }
@@ -28,9 +34,11 @@ namespace Quackers.TestLogger
         string SummaryStartMarker { get; set; }
         string SummaryCompleteMarker { get; set; }
         string FailureStartMarker { get; set; }
+        string SlowStartMarker { get; set; }
         string LogPrefix { get; set; }
         string TestNamePrefix { get; set; }
         string FailureIndexPlaceholder { get; set; }
+        string SlowIndexPlaceholder { get; set; }
     }
 
     internal class HelpAttribute : Attribute

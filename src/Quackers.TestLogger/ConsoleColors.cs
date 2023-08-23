@@ -12,6 +12,8 @@ namespace Quackers.TestLogger
         Color Error { get; }
         Color Disabled { get; }
         Color DisabledReason { get; }
+        Color Slow { get; }
+        Color Warn { get; }
     }
 
     public class DefaultTheme: ITheme
@@ -23,6 +25,8 @@ namespace Quackers.TestLogger
         public Color Error { get; } = BrightMagenta;
         public Color Disabled { get; } = Grey;
         public Color DisabledReason { get; } = DarkGrey;
+        public Color Slow { get; } = BrightRed;
+        public Color Warn { get; } = BrightYellow;
     }
 
     public class DarkerTheme
@@ -35,6 +39,8 @@ namespace Quackers.TestLogger
         public Color Error { get; } = Magenta;
         public Color Disabled { get; } = Grey;
         public Color DisabledReason { get; } = LightGrey;
+        public Color Slow { get; } = Red;
+        public Color Warn { get; } = Yellow;
     }
 
     public static class ConsoleColors
@@ -48,6 +54,7 @@ namespace Quackers.TestLogger
         public static readonly Color BrightCyan = Color.FromArgb(255, LighterSecondaryValue, LighterPrimaryValue, LighterPrimaryValue);
         public static readonly Color BrightMagenta = Color.FromArgb(255, LighterPrimaryValue, LighterSecondaryValue, LighterPrimaryValue);
         public static readonly Color DarkGrey = Color.FromArgb(255, DarkGreyValue, DarkGreyValue, DarkGreyValue);
+        public static readonly Color BrightYellow = Color.FromArgb(255, LighterPrimaryValue, LighterPrimaryValue, LighterSecondaryValue);
         
         private const int DarkerPrimaryValue = 140;
         private const int LightGreyValue = 170;
@@ -58,5 +65,6 @@ namespace Quackers.TestLogger
         public static readonly Color Magenta = Color.FromArgb(255, DarkerPrimaryValue, 0, DarkerPrimaryValue);
         public static readonly Color Grey = Color.FromArgb(255, LighterSecondaryValue, LighterSecondaryValue, LighterSecondaryValue);
         public static readonly Color LightGrey = Color.FromArgb(255, LightGreyValue, LightGreyValue, LightGreyValue);
+        public static readonly Color Yellow = Color.FromArgb(255, DarkerPrimaryValue, DarkerPrimaryValue, 0);
     }
 }

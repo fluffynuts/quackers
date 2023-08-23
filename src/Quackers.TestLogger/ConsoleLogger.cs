@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
+using Pastel;
 
 namespace Quackers.TestLogger
 {
@@ -12,8 +13,10 @@ namespace Quackers.TestLogger
         public string NoneLabel { get; set; } = "❓";
         public string SkipLabel { get; set; } = "🚫";
         public string NotFoundLabel { get; set; } = "🤷";
-        
-        public bool NoColor { get; set; } 
+        public bool HighlightSlowTests { get; set; } = true;
+        public int SlowTestThresholdMs { get; set; } = 1000;
+
+        public bool NoColor { get; set; }
             = Environment.GetEnvironmentVariable("NO_COLOR") is not null;
 
         public string Theme
@@ -37,8 +40,10 @@ namespace Quackers.TestLogger
         public string SummaryStartMarker { get; set; }
         public string SummaryCompleteMarker { get; set; }
         public string FailureStartMarker { get; set; }
+        public string SlowStartMarker { get; set; }
         public string TestNamePrefix { get; set; }
         public string FailureIndexPlaceholder { get; set; }
+        public string SlowIndexPlaceholder { get; set; }
 
         private int _passed;
         private int _skipped;
@@ -60,6 +65,27 @@ namespace Quackers.TestLogger
             }
 
             InsertBreak();
+            PrintFailures();
+            PrintSlowTests();
+            PrintIfNotNull(SummaryCompleteMarker);
+        }
+
+        private void PrintSlowTests()
+        {
+            PrintIfNotNull(SlowStartMarker);
+            if (SlowStartMarker is null)
+            {
+                LogWarning("Slow tests:");
+            }
+
+            for (var i = 0; i < _slowTests.Count; i++)
+            {
+                LogSlowTest(i + 1, _slowTests[i]);
+            }
+        }
+
+        private void PrintFailures()
+        {
             PrintIfNotNull(FailureStartMarker);
             if (FailureStartMarker is null)
             {
@@ -71,8 +97,6 @@ namespace Quackers.TestLogger
                 InsertBreak();
                 LogStoredTestFailure(i + 1, _errors[i]);
             }
-
-            PrintIfNotNull(SummaryCompleteMarker);
         }
 
         void PrintIfNotNull(string str)
@@ -117,7 +141,16 @@ namespace Quackers.TestLogger
                 LogStacktrace(line);
             }
         }
-        
+
+        private void LogSlowTest(
+            int idx,
+            TestResultEventArgs e
+        )
+        {
+            var idxPart = SlowIndexPlaceholder ?? $"[{idx}]";
+            LogWarning($"{idxPart} {TestNameFor(e)} ({DurationStringFor(e.Result.Duration, false)})");
+        }
+
         private const string STORED_TEST_FAILURE_INDENT = "  ";
         private const string IMMEDIATE_TEST_FAILURE_INDENT = "    ";
 
@@ -135,6 +168,11 @@ namespace Quackers.TestLogger
         public void LogInfo(string str)
         {
             Log(str);
+        }
+
+        public void LogWarning(string str)
+        {
+            Console.WriteLine($"{LogPrefix}{str.Warn()}");
         }
 
         public void LogError(string str)
@@ -158,7 +196,9 @@ namespace Quackers.TestLogger
         public void LogPass(TestResultEventArgs e)
         {
             _passed++;
-            var duration = DurationStringFor(e.Result.Duration);
+            var isSlow = IsSlow(e);
+            var duration = DurationStringFor(e.Result.Duration, isSlow);
+
             var str = TestNameFor(e);
             Log($"{Prefix(PassLabel, str).Pass()} [{duration}]");
         }
@@ -168,31 +208,63 @@ namespace Quackers.TestLogger
             return $"{TestNamePrefix}{e.Result.TestCase.FullyQualifiedName}";
         }
 
-        private string DurationStringFor(TimeSpan resultDuration)
+        private bool IsSlow(TestResultEventArgs e)
         {
-            var ms = resultDuration.TotalMilliseconds;
-            if (ms < 1)
+            var result = HighlightSlowTests &&
+                e.Result.Duration.TotalMilliseconds >= SlowTestThresholdMs;
+            if (result)
             {
-                return "< 1 ms";
+                StoreSlow(e);
             }
 
-            if (ms < 1000)
-            {
-                return $"{ms} ms";
-            }
+            return result;
+        }
 
-            if (ms < 60000)
-            {
-                var dec = (decimal) ms / 1000M;
-                return $"{dec:0.00} s";
-            }
+        private string DurationStringFor(
+            TimeSpan resultDuration,
+            bool markAsSlow
+        )
+        {
+            return HighlightIfSlow(
+                () =>
+                {
+                    var ms = resultDuration.TotalMilliseconds;
+                    if (ms < 1)
+                    {
+                        return "< 1 ms";
+                    }
 
-            return $"{resultDuration}";
+                    if (ms < 1000)
+                    {
+                        return $"{ms} ms";
+                    }
+
+                    if (ms < 60000)
+                    {
+                        var dec = (decimal) ms / 1000M;
+                        return $"{dec:0.00} s";
+                    }
+
+                    return $"{resultDuration}";
+                },
+                markAsSlow
+            );
+        }
+
+        private string HighlightIfSlow(
+            Func<string> func,
+            bool isSlow
+        )
+        {
+            return isSlow
+                ? $"{func()} (slow)".HighlightSlow()
+                : func();
         }
 
         public void LogFail(TestResultEventArgs e)
         {
-            var duration = DurationStringFor(e.Result.Duration);
+            var isSlow = IsSlow(e);
+            var duration = DurationStringFor(e.Result.Duration, isSlow);
             Log($"{Prefix(FailLabel, TestNameFor(e)).Fail()} [{duration}]");
             if (OutputFailuresInline)
             {
@@ -208,7 +280,13 @@ namespace Quackers.TestLogger
             _errors.Add(e);
         }
 
+        private void StoreSlow(TestResultEventArgs e)
+        {
+            _slowTests.Add(e);
+        }
+
         private readonly List<TestResultEventArgs> _errors = new();
+        private readonly List<TestResultEventArgs> _slowTests = new();
         private DateTime _started;
 
         public void LogNone(TestResultEventArgs e)

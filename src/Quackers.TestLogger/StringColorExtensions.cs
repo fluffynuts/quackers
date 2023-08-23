@@ -1,6 +1,5 @@
 ﻿using System;
 using Pastel;
-using static Quackers.TestLogger.ConsoleColors;
 
 namespace Quackers.TestLogger
 {
@@ -31,6 +30,13 @@ namespace Quackers.TestLogger
             return DisableColor
                 ? str
                 : str.Pastel(Theme.Fail);
+        }
+
+        public static string Warn(this string str)
+        {
+            return DisableColor
+                ? str
+                : str.Pastel(Theme.Warn);
         }
 
         public static string Pass(this string str)
@@ -74,6 +80,15 @@ namespace Quackers.TestLogger
             return DisableColor
                 ? str
                 : str.Pastel(Theme.DisabledReason);
+        }
+
+        public static string HighlightSlow(
+            this string str
+        )
+        {
+            return DisableColor
+                ? str
+                : str.Pastel(Theme.Slow);
         }
     }
 }

@@ -52,10 +52,7 @@ namespace Quackers.TestLogger
         public void ShowSummary()
         {
             PrintIfNotNull(SummaryStartMarker);
-            if (VerboseSummary)
-            {
-                ShowVerboseDetails();
-            }
+            PrintSlowTests();
 
             if (_errors.Count == 0)
             {
@@ -66,7 +63,12 @@ namespace Quackers.TestLogger
 
             InsertBreak();
             PrintFailures();
-            PrintSlowTests();
+            if (VerboseSummary)
+            {
+                InsertBreak();
+                ShowVerboseDetails();
+            }
+
             PrintIfNotNull(SummaryCompleteMarker);
         }
 

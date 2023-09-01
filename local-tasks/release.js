@@ -9,16 +9,16 @@ const gulp = requireModule("gulp-with-help"),
 
 env.associate([ "DRY_RUN" ], [ "push" ]);
 
-gulp.task("release", done => {
-  runSequence("test", "pack", "push", "commit-release", "tag-and-push", done);
-});
-
 gulp.task("push", "pushes packages to nuget.org", () => {
   const packages = [
       findNupkg("Quackers.TestLogger"),
     ].flat(),
     promises = packages.map(p => nugetPush(p));
   return Promise.all(promises);
+});
+
+gulp.task("release", done => {
+  runSequence("test", "pack", "push", "commit-release", "tag-and-push", done);
 });
 
 function findNupkg(id) {

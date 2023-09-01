@@ -40,7 +40,8 @@ namespace Quackers.TestLogger
         public string SummaryStartMarker { get; set; }
         public string SummaryCompleteMarker { get; set; }
         public string FailureStartMarker { get; set; }
-        public string SlowStartMarker { get; set; }
+        public string SlowSummaryStartMarker { get; set; }
+        public string SlowSummaryCompleteMarker { get; set; }
         public string TestNamePrefix { get; set; }
         public string FailureIndexPlaceholder { get; set; }
         public string SlowIndexPlaceholder { get; set; }
@@ -74,8 +75,8 @@ namespace Quackers.TestLogger
 
         private void PrintSlowTests()
         {
-            PrintIfNotNull(SlowStartMarker);
-            if (SlowStartMarker is null)
+            PrintIfNotNull(SlowSummaryStartMarker);
+            if (SlowSummaryStartMarker is null)
             {
                 LogWarning("Slow tests:");
             }
@@ -84,6 +85,7 @@ namespace Quackers.TestLogger
             {
                 LogSlowTest(i + 1, _slowTests[i]);
             }
+            PrintIfNotNull(SlowSummaryCompleteMarker);
         }
 
         private void PrintFailures()

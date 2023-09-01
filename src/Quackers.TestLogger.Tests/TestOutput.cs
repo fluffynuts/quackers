@@ -24,6 +24,8 @@ public class IntegrationTests
         private const string SUMMARY_COMPLETE = "::end::";
         private const string FAILURE_START = "::le_fail::";
         private const string FAILURE_INDEX_PLACEHOLDER = "::#::";
+        private const string SLOW_SUMMARY_START = "::slow_start::";
+        private const string SLOW_SUMMARY_COMPLETE = "::slow_complete::";
         private static readonly List<string> StdOut = new();
         private static readonly List<string> StdErr = new();
 
@@ -31,7 +33,8 @@ public class IntegrationTests
         public void OneTimeSetup()
         {
             RunTestProjectWithQuackersArgs(
-                string.Join(";",
+                string.Join(
+                    ";",
                     $"failureIndexPlaceholder={FAILURE_INDEX_PLACEHOLDER}",
                     "passlabel=[P]",
                     "faillabel=[F]",
@@ -43,8 +46,12 @@ public class IntegrationTests
                     "nonelabel=[N]",
                     $"summarystartmarker={SUMMARY_START}",
                     $"summarycompletemarker={SUMMARY_COMPLETE}",
-                    $"failurestartmarker={FAILURE_START}"
-                ), StdOut, StdErr
+                    $"failurestartmarker={FAILURE_START}",
+                    $"slowsummarystartmarker={SLOW_SUMMARY_START}",
+                    $"slowsummarycompletemarker={SLOW_SUMMARY_COMPLETE}"
+                ),
+                StdOut,
+                StdErr
             );
         }
 
@@ -69,6 +76,22 @@ public class IntegrationTests
             Expect(line)
                 .Not.To.Match(new Regex("\\[\\d+\\]"));
         }
+
+        [Test]
+        public void ShouldFindSlowReport()
+        {
+            // Arrange
+            var summaryBlock = FindLinesBetween(
+                SLOW_SUMMARY_START,
+                SLOW_SUMMARY_COMPLETE,
+                StdOut
+            );
+            // Act
+            // Assert
+            Expect(summaryBlock)
+                .To.Contain.Exactly(2)
+                .Matched.By(s => s.Contains("QuackersTestHost.SomeTests.LongerPasses"));
+        }
     }
 
     [TestCase("NO_COLOR", "1", true)]
@@ -83,10 +106,10 @@ public class IntegrationTests
         // Arrange
         using var _ = new AutoTempEnvironmentVariable(envVar, value);
         // Act
-        
+
         var sut = new ConsoleLogger();
         var result = sut.NoColor;
-        
+
         // Assert
         Expect(result)
             .To.Equal(expected);
@@ -106,7 +129,8 @@ public class IntegrationTests
         public void OneTimeSetup()
         {
             RunTestProjectWithQuackersArgs(
-                string.Join(";",
+                string.Join(
+                    ";",
                     $"testnameprefix={TEST_NAME_PREFIX}",
                     "passlabel=[P]",
                     "faillabel=[F]",
@@ -119,7 +143,9 @@ public class IntegrationTests
                     $"summarystartmarker={SUMMARY_START}",
                     $"summarycompletemarker={SUMMARY_COMPLETE}",
                     $"failurestartmarker={FAILURE_START}"
-                ), StdOut, StdErr
+                ),
+                StdOut,
+                StdErr
             );
         }
 
@@ -205,7 +231,8 @@ But explicit test line is:
         public void OneTimeSetup()
         {
             RunTestProjectWithQuackersArgs(
-                string.Join(";",
+                string.Join(
+                    ";",
                     $"logprefix={LOG_PREFIX}",
                     "passlabel=[P]",
                     "faillabel=[F]",
@@ -219,7 +246,9 @@ But explicit test line is:
                     $"summarycompletemarker={SUMMARY_COMPLETE}",
                     $"failurestartmarker={FAILURE_START}"
                 ),
-                StdOut, StdErr);
+                StdOut,
+                StdErr
+            );
         }
 
         [Test]
@@ -330,8 +359,11 @@ But explicit test line is:
         [OneTimeSetUp]
         public void OneTimeSetup()
         {
-            RunTestProjectWithQuackersArgs("passlabel=[P];faillabel=[F];SKIPLABEL=[S];NoneLabel=[N];nocolor=true",
-                StdOut, StdErr);
+            RunTestProjectWithQuackersArgs(
+                "passlabel=[P];faillabel=[F];SKIPLABEL=[S];NoneLabel=[N];nocolor=true",
+                StdOut,
+                StdErr
+            );
         }
 
         [Test]
@@ -383,8 +415,13 @@ But explicit test line is:
     private static void RunTestProjectWithQuackersArgs(string qargs, List<string> stdout, List<string> stderr)
     {
         var demoProject = FindDemoProject();
-        using var proc = ProcessIO.Start("dotnet", "test", demoProject, "-l",
-            $"quackers;{qargs}");
+        using var proc = ProcessIO.Start(
+            "dotnet",
+            "test",
+            demoProject,
+            "-l",
+            $"quackers;{qargs}"
+        );
         if (proc.Process is null)
         {
             throw new InvalidOperationException("Unable to start 'npm run demo'");

@@ -34,7 +34,8 @@ namespace Quackers.TestLogger
         string SummaryStartMarker { get; set; }
         string SummaryCompleteMarker { get; set; }
         string FailureStartMarker { get; set; }
-        string SlowStartMarker { get; set; }
+        string SlowSummaryStartMarker { get; set; }
+        string SlowSummaryCompleteMarker { get; set; }
         string LogPrefix { get; set; }
         string TestNamePrefix { get; set; }
         string FailureIndexPlaceholder { get; set; }

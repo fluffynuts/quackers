@@ -17,7 +17,8 @@
     "clean-packages": "rimraf packages",
     "release": "cross-env PACK_INCREMENT_VERSION=1 BUILD_CONFIGURATION=Release zarro release",
     "zarro": "zarro",
-    "pack": "zarro @"
+    "pack": "zarro @",
+    "test-zarro": "run-s test pack"
   },
   "repository": {
     "type": "git",

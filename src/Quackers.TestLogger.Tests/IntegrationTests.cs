@@ -464,12 +464,12 @@ But explicit test line is:
         {
             if (stdout.Any())
             {
-                Console.WriteLine($"All stdout:\n{stdout.JoinWith("\n")}");
+                Console.Error.WriteLine($"All stdout:\n{stdout.JoinWith("\n")}");
             }
 
             if (stderr.Any())
             {
-                Console.WriteLine($"All stderr:\n{stderr.JoinWith("\n")}");
+                Console.Error.WriteLine($"All stderr:\n{stderr.JoinWith("\n")}");
             }
         }
 

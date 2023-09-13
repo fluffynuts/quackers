@@ -18,7 +18,7 @@
     "release": "cross-env PACK_INCREMENT_VERSION=1 BUILD_CONFIGURATION=Release zarro release",
     "zarro": "zarro",
     "pack": "zarro @",
-    "test-zarro": "run-s test pack"
+    "test-zarro": "zarro @"
   },
   "repository": {
     "type": "git",
@@ -36,6 +36,7 @@
   },
   "homepage": "https://github.com/fluffynuts/quackers#readme",
   "devDependencies": {
-    "zarro": "^1.144.211"
+    "typescript": "^5.2.2",
+    "zarro": "^1.144.221"
   }
 }

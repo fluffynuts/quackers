@@ -6,7 +6,6 @@ using System.Text.RegularExpressions;
 using PeanutButter.Utils;
 using NUnit.Framework;
 using NExpect;
-using NuGet.Versioning;
 using NUnit.Framework.Interfaces;
 using static NExpect.Expectations;
 
@@ -15,7 +14,17 @@ namespace Quackers.TestLogger.Tests;
 [TestFixture]
 public class IntegrationTests
 {
-    private const bool DEBUG = false;
+    private static bool Debug => DetermineIfDebug();
+
+    private static bool DetermineIfDebug()
+    {
+        var envVar = Environment.GetEnvironmentVariable("DEBUG");
+        if (envVar is null)
+        {
+            return false;
+        }
+        return envVar.AsBoolean();
+    }
 
     [TestFixture]
     public class FailurePlaceholdersInsteadOfFailureIndexes
@@ -451,8 +460,7 @@ But explicit test line is:
             stderr.Add(line);
         }
 
-        if (DEBUG)
-#pragma warning disable CS0162
+        if (Debug)
         {
             if (stdout.Any())
             {
@@ -464,7 +472,6 @@ But explicit test line is:
                 Console.WriteLine($"All stderr:\n{stderr.JoinWith("\n")}");
             }
         }
-#pragma warning restore CS0162
 
         proc.Process.WaitForExit();
     }

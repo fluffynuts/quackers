@@ -5,7 +5,7 @@ using static NExpect.Expectations;
 namespace Quackers.TestLogger.Tests
 {
     [TestFixture]
-    public class TestConsoleLogger
+    public class ConsoleLoggerTests
     {
         [TestFixture]
         public class Defaults

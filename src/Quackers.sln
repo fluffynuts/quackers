@@ -18,6 +18,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{B5359B
 		..\quack.png = ..\quack.png
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{5E3388FA-196F-4797-9191-63621B139246}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{2FB7378E-CD37-4945-81BD-8B21DCB5C39B}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\gh-release.yml = ..\.github\workflows\gh-release.yml
+		..\.github\workflows\run-all-tests.yml = ..\.github\workflows\run-all-tests.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,5 +47,8 @@ Global
 		{3C191549-43B4-4525-B5D0-2BF33C774906}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3C191549-43B4-4525-B5D0-2BF33C774906}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3C191549-43B4-4525-B5D0-2BF33C774906}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2FB7378E-CD37-4945-81BD-8B21DCB5C39B} = {5E3388FA-196F-4797-9191-63621B139246}
 	EndGlobalSection
 EndGlobal

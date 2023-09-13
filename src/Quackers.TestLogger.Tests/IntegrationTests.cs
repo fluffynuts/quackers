@@ -234,7 +234,7 @@ But explicit test line is:
         private const string LOG_PREFIX = "::quackers::";
         private const string SUMMARY_START = "<summary>";
         private const string SUMMARY_COMPLETE = "</summary>";
-        private const string FAILURE_START = "-- failures --";
+        private const string FAILURE_START = "(LEFAIL)";
 
         [OneTimeSetUp]
         public void OneTimeSetup()
@@ -250,7 +250,6 @@ But explicit test line is:
                     "verbosesummary=true",
                     "nocolor=true",
                     "outputfailuresinline=true",
-                    "nonelabel=[N]",
                     $"summarystartmarker={SUMMARY_START}",
                     $"summarycompletemarker={SUMMARY_COMPLETE}",
                     $"failurestartmarker={FAILURE_START}"
@@ -433,7 +432,11 @@ But explicit test line is:
         }
     }
 
-    private static void RunTestProjectWithQuackersArgs(string qargs, List<string> stdout, List<string> stderr)
+    private static void RunTestProjectWithQuackersArgs(
+        string qargs, 
+        List<string> stdout, 
+        List<string> stderr
+    )
     {
         var demoProject = FindDemoProject();
         using var proc = ProcessIO.Start(

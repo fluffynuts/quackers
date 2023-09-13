@@ -19,6 +19,9 @@ jobs:
     - uses: actions/setup-node@v2-beta
       with:
         node-version: '18'
+    - name: raw output from integration test
+      run: |
+        npm run demo-integration || exit 0
     - name: Build and test
       env:
         DEBUG: 1

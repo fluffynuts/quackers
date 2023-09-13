@@ -383,7 +383,10 @@ But explicit test line is:
             // Arrange
             Expect(StdOut)
                 .To.Contain.Exactly(1)
-                .Starting.With("[F] QuackersTestHost.SomeTests.ShouldFail");
+                .Starting.With(
+                    "[F] QuackersTestHost.SomeTests.ShouldFail",
+                    () => $"full output:\n{StdOut.JoinWith("\n")}"
+                );
             // Act
             // Assert
         }

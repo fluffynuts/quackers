@@ -373,7 +373,10 @@ But explicit test line is:
             // Act
             Expect(StdOut)
                 .To.Contain.Exactly(1)
-                .Starting.With("[P] QuackersTestHost.SomeTests.LongerPasses(1)");
+                .Starting.With(
+                    "[P] QuackersTestHost.SomeTests.LongerPasses(1)",
+                    () => $"full output:\n{StdOut.JoinWith("\n")}"
+                );
             // Assert
         }
 
@@ -398,7 +401,10 @@ But explicit test line is:
             // Act
             Expect(StdOut)
                 .To.Contain.Exactly(1)
-                .Starting.With("[S] QuackersTestHost.SomeTests.SkippyTesty [ skipped because... ]");
+                .Starting.With(
+                    "[S] QuackersTestHost.SomeTests.SkippyTesty [ skipped because... ]",
+                    () => $"full output:\n{StdOut.JoinWith("\n")}"
+                );
             // Assert
         }
 
@@ -409,7 +415,10 @@ But explicit test line is:
             // Arrange
             Expect(StdOut)
                 .To.Contain.Exactly(1)
-                .Starting.With("[N] QuackersTestHost.SomeTests.ExplicitTest [ integration test ]");
+                .Starting.With(
+                    "[N] QuackersTestHost.SomeTests.ExplicitTest [ integration test ]",
+                    () => $"full output:\n{StdOut.JoinWith("\n")}"
+                );
             // Act
             // Assert
         }
@@ -526,18 +535,5 @@ But explicit test line is:
         }
 
         return result.ToArray();
-    }
-}
-
-[TestFixture]
-public class NugetVersioningFun
-{
-    [Test]
-    public void NAME()
-    {
-        // Arrange
-        NuGetVersion.TryParse("1.0.13-2306061708-3a8d691", out var parsed);
-        // Act
-        // Assert
     }
 }

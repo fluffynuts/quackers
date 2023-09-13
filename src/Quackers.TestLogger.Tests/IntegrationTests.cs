@@ -453,13 +453,11 @@ But explicit test line is:
 
         foreach (var line in proc.StandardOutput)
         {
-            Console.WriteLine(line);
             stdout.Add(line);
         }
 
         foreach (var line in proc.StandardError)
         {
-            Console.Error.Write(line);
             stderr.Add(line);
         }
 

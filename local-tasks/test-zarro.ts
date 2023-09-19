@@ -7,7 +7,7 @@
 
   gulp.task("test-zarro", async () => {
     await testZarro({
-      package: "beta",
+      packageVersion: "beta",
       rollback: true,
       tasks: ["test", "pack"]
     });

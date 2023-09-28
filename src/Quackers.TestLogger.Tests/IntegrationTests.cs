@@ -231,10 +231,15 @@ But explicit test line is:
         private static readonly List<string> StdOut = new();
         private static readonly List<string> StdErr = new();
 
-        private const string LOG_PREFIX = "::quackers::";
-        private const string SUMMARY_START = "<summary>";
-        private const string SUMMARY_COMPLETE = "</summary>";
-        private const string FAILURE_START = "(LEFAIL)";
+        private const string LOG_PREFIX = "::";
+        private const string SUMMARY_START = "::SS::";
+        private const string SUMMARY_COMPLETE = "::SC::";
+        private const string FAILURE_START = "::SF::";
+        private const string SLOW_START = "::SSS::";
+        private const string SLOW_COMPLETE = "::SSC::";
+        private const string FAILURE_INDEX_PLACEHOLDER = "::[#]::";
+        private const string SLOW_INDEX_PLACEHOLDER = "::[-]::";
+        
 
         [OneTimeSetUp]
         public void OneTimeSetup()
@@ -252,7 +257,11 @@ But explicit test line is:
                     "outputfailuresinline=true",
                     $"summarystartmarker={SUMMARY_START}",
                     $"summarycompletemarker={SUMMARY_COMPLETE}",
-                    $"failurestartmarker={FAILURE_START}"
+                    $"failurestartmarker={FAILURE_START}",
+                    $"slowsummarystartmarker={SLOW_START}",
+                    $"slowsummarycompletemarker={SLOW_COMPLETE}",
+                    $"failureindexplaceholder={FAILURE_INDEX_PLACEHOLDER}",
+                    $"slowindexplaceholder={SLOW_INDEX_PLACEHOLDER}"
                 ),
                 StdOut,
                 StdErr

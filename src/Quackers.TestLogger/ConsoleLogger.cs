@@ -17,6 +17,8 @@ namespace Quackers.TestLogger
         public bool HighlightSlowTests { get; set; } = true;
         public int SlowTestThresholdMs { get; set; } = 1000;
         public string DebugLogFile { get; set; }
+        public bool ShowTimestamps { get; set; } = false;
+        public string TimestampFormat { get; set; } = "yyyy-MM-dd HH:mm:ss.fff";
 
         public bool NoColor { get; set; }
             = Environment.GetEnvironmentVariable("NO_COLOR") is not null;
@@ -284,16 +286,6 @@ namespace Quackers.TestLogger
             }
         }
 
-        public void LogPass(TestResultEventArgs e)
-        {
-            _passed++;
-            var isSlow = IsSlow(e);
-            var duration = DurationStringFor(e.Result.Duration, isSlow);
-
-            var str = TestNameFor(e);
-            Log($"{Prefix(PassLabel, str).Pass()} [{duration}]");
-        }
-
         private string TestNameFor(TestResultEventArgs e)
         {
             return $"{TestNamePrefix}{e.Result.TestCase.FullyQualifiedName}";
@@ -352,19 +344,6 @@ namespace Quackers.TestLogger
                 : func();
         }
 
-        public void LogFail(TestResultEventArgs e)
-        {
-            var isSlow = IsSlow(e);
-            var duration = DurationStringFor(e.Result.Duration, isSlow);
-            Log($"{Prefix(FailLabel, TestNameFor(e)).Fail()} [{duration}]");
-            if (OutputFailuresInline)
-            {
-                LogInlineTestFailure(e);
-            }
-
-            StoreFailure(e);
-        }
-
         private void StoreFailure(TestResultEventArgs e)
         {
             _failed++;
@@ -380,11 +359,34 @@ namespace Quackers.TestLogger
         private readonly List<TestResultEventArgs> _slowTests = new();
         private DateTime _started;
 
+        public void LogPass(TestResultEventArgs e)
+        {
+            _passed++;
+            var isSlow = IsSlow(e);
+            var duration = DurationStringFor(e.Result.Duration, isSlow);
+
+            var str = TestNameFor(e);
+            Log($"{TestLinePrefix(PassLabel, str).Pass()} [{duration}]");
+        }
+
+        public void LogFail(TestResultEventArgs e)
+        {
+            var isSlow = IsSlow(e);
+            var duration = DurationStringFor(e.Result.Duration, isSlow);
+            Log($"{TestLinePrefix(FailLabel, TestNameFor(e)).Fail()} [{duration}]");
+            if (OutputFailuresInline)
+            {
+                LogInlineTestFailure(e);
+            }
+
+            StoreFailure(e);
+        }
+
         public void LogNone(TestResultEventArgs e)
         {
             var name = TestNameFor(e);
             var reason = e.Result.ErrorMessage;
-            Log($"{Prefix(NoneLabel, name).Disabled()} [ {reason.DisabledReason()} ]");
+            Log($"{TestLinePrefix(NoneLabel, name).Disabled()} [ {reason.DisabledReason()} ]");
         }
 
         public void LogSkipped(TestResultEventArgs e)
@@ -392,14 +394,14 @@ namespace Quackers.TestLogger
             _skipped++;
             var str = TestNameFor(e);
             var reason = e.Result.ErrorMessage;
-            Log($"{Prefix(SkipLabel, str).Disabled()} [ {reason.DisabledReason()} ]");
+            Log($"{TestLinePrefix(SkipLabel, str).Disabled()} [ {reason.DisabledReason()} ]");
         }
 
         public void LogNotFound(TestResultEventArgs e)
         {
             _skipped++;
             var str = TestNameFor(e);
-            Log($"{Prefix(NotFoundLabel, str).Error()}");
+            Log($"{TestLinePrefix(NotFoundLabel, str).Error()}");
         }
 
         public void LogErrorMessage(string str)
@@ -427,9 +429,18 @@ namespace Quackers.TestLogger
             }
         }
 
-        private string Prefix(string prefix, string str)
+        private string TestLinePrefix(string prefix, string str)
         {
-            return $"{prefix} {str}";
+            var timestamp = ShowTimestamps
+                ? $" [{GenerateTimeStamp()}]"
+                : "";
+            return $"{prefix}{timestamp} {str}";
+        }
+
+        private string GenerateTimeStamp()
+        {
+            var now = DateTime.Now;
+            return now.ToString(TimestampFormat);
         }
     }
 }

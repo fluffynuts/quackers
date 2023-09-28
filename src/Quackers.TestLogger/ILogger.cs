@@ -16,5 +16,6 @@ namespace Quackers.TestLogger
         void InsertBreak();
         void ShowSummary();
         void Reset();
+        string TimestampFormat { get; set; }
     }
 }

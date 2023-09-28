@@ -23,6 +23,7 @@ public class IntegrationTests
         {
             return false;
         }
+
         return envVar.AsBoolean();
     }
 
@@ -83,7 +84,7 @@ public class IntegrationTests
                     "Should have a failure summary for the ShouldFail test"
                 );
             Expect(line)
-                .Not.To.Match(new Regex("\\[\\d+\\]"));
+                .Not.To.Match("\\[\\d+\\]");
         }
 
         [Test]
@@ -99,7 +100,7 @@ public class IntegrationTests
             // Assert
             Expect(summaryBlock)
                 .To.Contain.Exactly(2)
-                .Matched.By(s => s.Contains("QuackersTestHost.SomeTests.LongerPasses"));
+                .Matched.By("QuackersTestHost\\.SomeTests\\.LongerPasses");
         }
     }
 
@@ -137,6 +138,7 @@ public class IntegrationTests
         [OneTimeSetUp]
         public void OneTimeSetup()
         {
+            Started = DateTime.Now;
             RunTestProjectWithQuackersArgs(
                 string.Join(
                     ";",
@@ -149,6 +151,7 @@ public class IntegrationTests
                     "nocolor=true",
                     "outputfailuresinline=true",
                     "nonelabel=[N]",
+                    "showtimestamps=true",
                     $"summarystartmarker={SUMMARY_START}",
                     $"summarycompletemarker={SUMMARY_COMPLETE}",
                     $"failurestartmarker={FAILURE_START}"
@@ -156,7 +159,12 @@ public class IntegrationTests
                 StdOut,
                 StdErr
             );
+            Finished = DateTime.Now;
         }
+
+        public DateTime Started { get; set; }
+        public DateTime Finished { get; set; }
+
 
         [Test]
         public void ShouldPrefixPass()
@@ -165,7 +173,9 @@ public class IntegrationTests
             // Act
             Expect(StdOut)
                 .To.Contain.Exactly(1)
-                .Starting.With($"[P] {TEST_NAME_PREFIX}QuackersTestHost.SomeTests.LongerPasses(1)");
+                .Matched.By(
+                    $"^\\[P].*{TEST_NAME_PREFIX}QuackersTestHost.SomeTests.LongerPasses\\(1\\)"
+                );
             // Assert
         }
 
@@ -175,7 +185,9 @@ public class IntegrationTests
             // Arrange
             Expect(StdOut)
                 .To.Contain.Exactly(1)
-                .Starting.With($"[F] {TEST_NAME_PREFIX}QuackersTestHost.SomeTests.ShouldFail");
+                .Matched.By(
+                    $"^\\[F].*{TEST_NAME_PREFIX}QuackersTestHost.SomeTests.ShouldFail"
+                );
             // Act
             // Assert
         }
@@ -201,7 +213,9 @@ public class IntegrationTests
             // Act
             Expect(StdOut)
                 .To.Contain.Exactly(1)
-                .Starting.With($"[S] {TEST_NAME_PREFIX}QuackersTestHost.SomeTests.SkippyTesty [ skipped because... ]");
+                .Matched.By(
+                    $"^\\[S\\].*{TEST_NAME_PREFIX}QuackersTestHost.SomeTests.SkippyTesty \\[ skipped because... \\]"
+                );
             // Assert
         }
 
@@ -209,11 +223,13 @@ public class IntegrationTests
         public void ShouldPrefixNone()
         {
             // this is how NUnit reports explicit tests
-            var expected = $"[N] {TEST_NAME_PREFIX}QuackersTestHost.SomeTests.ExplicitTest [ integration test ]";
+            var expected =
+                $"^\\[N\\].*{TEST_NAME_PREFIX}QuackersTestHost.SomeTests.ExplicitTest \\[ integration test \\]";
+
             // Arrange
             Expect(StdOut)
                 .To.Contain.Exactly(1)
-                .Starting.With(
+                .Matched.By(
                     expected,
                     () => $@"Looking for:
 {expected}
@@ -222,6 +238,77 @@ But explicit test line is:
                 );
             // Act
             // Assert
+        }
+
+        [Test]
+        public void ShouldIncludeTimestampsWhenOptingIn()
+        {
+            // Arrange
+            var pass = new Regex("^\\[P\\]");
+            var fail = new Regex("^\\[F\\]");
+            var skip = new Regex("^\\[S\\]");
+            var dtRegex = new Regex("^\\[[A-Z]{1}\\] \\[(?<timestamp>[0-9:. -]+)\\]");
+            var timestampRegex = new Regex(
+                string.Join(
+                    "",
+                    "^(?<year>[0-9]{4})",
+                    "-",
+                    "(?<month>[0-9]{2})",
+                    "-",
+                    "(?<day>[0-9]{2})",
+                    " ",
+                    "(?<hour>[0-9]{2})",
+                    ":",
+                    "(?<minute>[0-9]{2})",
+                    ":",
+                    "(?<second>[0-9]{2})",
+                    ".",
+                    "(?<ms>[0-9]{3})$"
+                )
+            );
+            // Act
+            var passLine = StdOut.FirstOrDefault(pass.IsMatch);
+            // Assert
+            Expect(passLine)
+                .Not.To.Be.Null();
+            var dtMatch = dtRegex.Match(passLine);
+            Expect(dtMatch.Success)
+                .To.Be.True(
+                    () => $"Should find a timestamp in the log line:\n{passLine}"
+                );
+            var timestampValue = dtMatch.Groups["timestamp"].Value;
+            Expect(timestampValue)
+                .Not.To.Be.Null.Or.Empty();
+            var tm = timestampRegex.Match(timestampValue);
+            Expect(tm.Success)
+                .To.Be.True();
+            var timestamp = new DateTime(
+                intVal("year"),
+                intVal("month"),
+                intVal("day"),
+                intVal("hour"),
+                intVal("minute"),
+                intVal("second"),
+                intVal("ms")
+            );
+            
+            Expect(timestamp)
+                .To.Be.Greater.Than.Or.Equal.To(Started)
+                .And
+                .To.Be.Less.Than.Or.Equal.To(Finished);
+
+            int intVal(string groupName)
+            {
+                return tm.Groups[groupName].Value.AsInteger();
+            }
+        }
+    }
+
+    public class TimestampFormatProvider : IFormatProvider
+    {
+        public object GetFormat(Type formatType)
+        {
+            throw new NotImplementedException();
         }
     }
 
@@ -254,7 +341,9 @@ But explicit test line is:
                     "nonelabel=[N]",
                     "verbosesummary=true",
                     "nocolor=true",
+                    "showtimestamps=false",
                     "outputfailuresinline=true",
+                    "showtimestamps=false",
                     $"summarystartmarker={SUMMARY_START}",
                     $"summarycompletemarker={SUMMARY_COMPLETE}",
                     $"failurestartmarker={FAILURE_START}",
@@ -352,7 +441,7 @@ But explicit test line is:
             // Act
             var testLine = StdOut
                 .Where(s => s.StartsWith(LOG_PREFIX))
-                .FirstOrDefault(s => s.Contains("[F] QuackersTestHost.SomeTests.ShouldFail"));
+                .FirstOrDefault(s => s.Contains($"{LOG_PREFIX}[F] QuackersTestHost.SomeTests.ShouldFail"));
             Expect(testLine)
                 .Not.To.Be.Null();
             var interesting = FindLinesBetween(
@@ -377,7 +466,7 @@ But explicit test line is:
         public void OneTimeSetup()
         {
             RunTestProjectWithQuackersArgs(
-                "passlabel=[P];faillabel=[F];SKIPLABEL=[S];NoneLabel=[N];nocolor=true",
+                "passlabel=[P];faillabel=[F];SKIPLABEL=[S];NoneLabel=[N];nocolor=true;showtimestamps=false",
                 StdOut,
                 StdErr
             );
@@ -442,8 +531,8 @@ But explicit test line is:
     }
 
     private static void RunTestProjectWithQuackersArgs(
-        string qargs, 
-        List<string> stdout, 
+        string qargs,
+        List<string> stdout,
         List<string> stderr
     )
     {
@@ -453,7 +542,7 @@ But explicit test line is:
             "test",
             demoProject,
             "-l",
-            $"quackers;{qargs}"
+            $"\"quackers;{qargs}\""
         );
         if (proc.Process is null)
         {

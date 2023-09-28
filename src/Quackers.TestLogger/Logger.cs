@@ -23,11 +23,18 @@ namespace Quackers.TestLogger
 
         public void Initialize(TestLoggerEvents events, string testRunDirectory)
         {
+            Log($"Initialize with test dir: {testRunDirectory}");
             SubscribeToEvents(events);
+        }
+
+        private void Log(string str)
+        {
+            Console.Error.WriteLine(str);
         }
 
         public void Initialize(TestLoggerEvents events, Dictionary<string, string> parameters)
         {
+            Log($"Initialize with parameters");
             try
             {
                 _logger = new ConsoleLogger();
@@ -70,7 +77,9 @@ namespace Quackers.TestLogger
 
         private static void DumpException(Exception ex, [CallerMemberName] string caller = null)
         {
-            Console.WriteLine($"Error running '{caller}': {ex.Message}\n{ex.StackTrace}");
+            Console.Error.WriteLine(
+                $"=================== LE ERROR ======================\nError running '{caller}': {ex.Message}\n{ex.StackTrace}\n==================== continue ================"
+            );
         }
 
         private void SetLoggerPropsFromEnvironment()
@@ -186,6 +195,12 @@ Flags can be set off with one of: {string.Join(",", FalsyValues)}
 
         private void SetLoggerPropsFrom(Dictionary<string, string> parameters)
         {
+            Console.WriteLine("Dumping quackers parameters");
+            foreach (var kvp in parameters)
+            {
+                Console.WriteLine($"{kvp.Key}: {kvp.Value}");
+            }
+
             if (!parameters.Any())
             {
                 return;

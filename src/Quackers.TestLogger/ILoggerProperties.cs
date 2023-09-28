@@ -25,7 +25,10 @@ namespace Quackers.TestLogger
         bool HighlightSlowTests { get; set; }
         [Help("Consider a test 'slow' when it exceeds a runtime of this many milliseconds")]
         int SlowTestThresholdMs { get; set; }
-        
+
+        [Help("Path to a file to use to output debug information about Quackers operations")]
+        string DebugLogFile { get; set; }
+
 
         bool VerboseSummary { get; set; }
         bool OutputFailuresInline { get; set; }

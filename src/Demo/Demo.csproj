@@ -15,7 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Quackers.TestLogger\Quackers.TestLogger.csproj" />
+      <ProjectReference Include="..\Quackers.TestLogger\Quackers.TestLogger.csproj" Condition="'$(Configuration)' == 'Debug'" />
+      <PackageReference Include="Quackers.TestLogger" Version="1.0.17" Condition="'$(Configuration)' == 'Release'" />
   </ItemGroup>
 
 </Project>

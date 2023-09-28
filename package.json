@@ -7,9 +7,10 @@
     "test-darker": "cross-env QUACKERS_THEME=darker zarro test-dotnet",
     "release-beta": "cross-env PACK_INCREMENT_VERSION=1 VERSION_INCREMENT_STRATEGY=prerelease zarro release",
     "build": "zarro @",
-    "demo": "dotnet test -l quackers src/Demo/Demo.csproj",
+    "demo": "dotnet test -l \"quackers;verboseSummary=true\" src/Demo/Demo.csproj",
     "demo-darker": "cross-env QUACKERS_THEME=darker dotnet test -l quackers src/Demo/Demo.csproj",
     "zarro-demo": "cross-env TEST_INCLUDE=Demo DOTNET_CORE=1 zarro test-dotnet",
+    "zarro-demo-package": "cross-env BUILD_CONFIGURATION=Release TEST_INCLUDE=Demo DOTNET_CORE=1 zarro test-dotnet",
     "zarro-demo-darker": "cross-env QUACKERS_THEME=darker DOTNET_CORE=1 TEST_INCLUDE=Demo zarro test-dotnet",
     "demo-integration": "dotnet test -l \"quackers;passlabel=[P];faillabel=[F];SKIPLABEL=[S];NoneLabel=[N];nocolor=true\" src/Demo/Demo.csproj",
     "zarro-test": "cross-env DOTNET_CORE=1 TEST_INCLUDE=src/Demo/Demo DOTNET_TEST_PREFIXES=Demo:LePrefix. zarro test-dotnet",
@@ -38,6 +39,6 @@
   "homepage": "https://github.com/fluffynuts/quackers#readme",
   "devDependencies": {
     "typescript": "^5.2.2",
-    "zarro": "^1.144.281"
+    "zarro": "^1.144.285"
   }
 }

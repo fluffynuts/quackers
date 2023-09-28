@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 
 namespace Quackers.TestLogger
@@ -14,6 +16,7 @@ namespace Quackers.TestLogger
         public string NotFoundLabel { get; set; } = "🤷";
         public bool HighlightSlowTests { get; set; } = true;
         public int SlowTestThresholdMs { get; set; } = 1000;
+        public string DebugLogFile { get; set; }
 
         public bool NoColor { get; set; }
             = Environment.GetEnvironmentVariable("NO_COLOR") is not null;
@@ -48,6 +51,60 @@ namespace Quackers.TestLogger
         private int _passed;
         private int _skipped;
         private int _failed;
+
+        private readonly object _debugFileLock = new();
+
+        private void DebugLog(string str)
+        {
+            if (!CanLogToDebugFile)
+            {
+                return;
+            }
+
+            try
+            {
+                lock (_debugFileLock)
+                {
+                    File.AppendAllText(
+                        DebugLogFile,
+                        $"{str}\n"
+                    );
+                }
+            }
+            catch
+            {
+                // disable debug logging if it falls over
+                _canLogToDebugFile = false;
+            }
+        }
+
+        private bool CanLogToDebugFile
+            => _canLogToDebugFile ??= DetermineIfCanLogToDebugFile();
+
+        private bool DetermineIfCanLogToDebugFile()
+        {
+            if (string.IsNullOrWhiteSpace(DebugLogFile))
+            {
+                return false;
+            }
+
+            try
+            {
+                var container = Path.GetDirectoryName(DebugLogFile);
+                if (container is not null && !Directory.Exists(container))
+                {
+                    Directory.CreateDirectory(container);
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool? _canLogToDebugFile;
 
         public void ShowSummary()
         {
@@ -84,6 +141,7 @@ namespace Quackers.TestLogger
             {
                 LogSlowTest(i + 1, _slowTests[i]);
             }
+
             PrintIfNotNull(SlowSummaryCompleteMarker);
         }
 
@@ -128,6 +186,30 @@ namespace Quackers.TestLogger
             _skipped = 0;
             _failed = 0;
             _started = DateTime.Now;
+            
+            DebugDumpProps(this);
+        }
+
+        private void DebugDumpProps(object obj)
+        {
+            if (!CanLogToDebugFile)
+            {
+                return;
+            }
+
+            var lines = new List<string>();
+            if (obj is not null)
+            {
+                var type = obj.GetType();
+                var props = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+                lines.Add($"Dumping {props.Length} properties on object of type {type}");
+                foreach (var prop in props)
+                {
+                    lines.Add($"  {prop.Name} = {prop.GetValue(obj)}");
+                }
+            }
+
+            DebugLog(string.Join("\n", lines));
         }
 
         private void LogStoredTestFailure(int idx, TestResultEventArgs e)
@@ -160,7 +242,13 @@ namespace Quackers.TestLogger
         private static IEnumerable<string> PrefixEachLine(string str, string prefix)
         {
             str ??= "";
-            var parts = str.Split(new[] { "\n" }, StringSplitOptions.None)
+            var parts = str.Split(
+                    new[]
+                    {
+                        "\n"
+                    },
+                    StringSplitOptions.None
+                )
                 .Select(s => s.Trim('\r'));
             foreach (var part in parts)
             {
@@ -244,7 +332,7 @@ namespace Quackers.TestLogger
 
                     if (ms < 60000)
                     {
-                        var dec = (decimal) ms / 1000M;
+                        var dec = (decimal)ms / 1000M;
                         return $"{dec:0.00} s";
                     }
 

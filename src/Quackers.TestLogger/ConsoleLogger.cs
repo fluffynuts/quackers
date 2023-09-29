@@ -18,7 +18,9 @@ namespace Quackers.TestLogger
         public int SlowTestThresholdMs { get; set; } = 1000;
         public string DebugLogFile { get; set; }
         public bool ShowTimestamps { get; set; } = false;
-        public string TimestampFormat { get; set; } = "yyyy-MM-dd HH:mm:ss.fff";
+        public string TimestampFormat { get; set; } = DEFAULT_TIMESTAMP_FORMAT;
+        
+        public const string DEFAULT_TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss.fff";
 
         public bool NoColor { get; set; }
             = Environment.GetEnvironmentVariable("NO_COLOR") is not null;
@@ -56,32 +58,10 @@ namespace Quackers.TestLogger
 
         private readonly object _debugFileLock = new();
 
-        private void DebugLog(string str)
-        {
-            if (!CanLogToDebugFile)
-            {
-                return;
-            }
-
-            try
-            {
-                lock (_debugFileLock)
-                {
-                    File.AppendAllText(
-                        DebugLogFile,
-                        $"{str}\n"
-                    );
-                }
-            }
-            catch
-            {
-                // disable debug logging if it falls over
-                _canLogToDebugFile = false;
-            }
-        }
-
         private bool CanLogToDebugFile
             => _canLogToDebugFile ??= DetermineIfCanLogToDebugFile();
+
+        private bool? _canLogToDebugFile;
 
         private bool DetermineIfCanLogToDebugFile()
         {
@@ -105,8 +85,6 @@ namespace Quackers.TestLogger
                 return false;
             }
         }
-
-        private bool? _canLogToDebugFile;
 
         public void ShowSummary()
         {
@@ -192,28 +170,6 @@ namespace Quackers.TestLogger
             DebugDumpProps(this);
         }
 
-        private void DebugDumpProps(object obj)
-        {
-            if (!CanLogToDebugFile)
-            {
-                return;
-            }
-
-            var lines = new List<string>();
-            if (obj is not null)
-            {
-                var type = obj.GetType();
-                var props = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-                lines.Add($"Dumping {props.Length} properties on object of type {type}");
-                foreach (var prop in props)
-                {
-                    lines.Add($"  {prop.Name} = {prop.GetValue(obj)}");
-                }
-            }
-
-            DebugLog(string.Join("\n", lines));
-        }
-
         private void LogStoredTestFailure(int idx, TestResultEventArgs e)
         {
             var idxPart = FailureIndexPlaceholder ?? $"[{idx}]";
@@ -239,6 +195,7 @@ namespace Quackers.TestLogger
         }
 
         private const string STORED_TEST_FAILURE_INDENT = "  ";
+
         private const string IMMEDIATE_TEST_FAILURE_INDENT = "    ";
 
         private static IEnumerable<string> PrefixEachLine(string str, string prefix)
@@ -356,7 +313,9 @@ namespace Quackers.TestLogger
         }
 
         private readonly List<TestResultEventArgs> _errors = new();
+
         private readonly List<TestResultEventArgs> _slowTests = new();
+
         private DateTime _started;
 
         public void LogPass(TestResultEventArgs e)
@@ -371,6 +330,7 @@ namespace Quackers.TestLogger
 
         public void LogFail(TestResultEventArgs e)
         {
+            LogDebug(e);
             var isSlow = IsSlow(e);
             var duration = DurationStringFor(e.Result.Duration, isSlow);
             Log($"{TestLinePrefix(FailLabel, TestNameFor(e)).Fail()} [{duration}]");
@@ -384,6 +344,7 @@ namespace Quackers.TestLogger
 
         public void LogNone(TestResultEventArgs e)
         {
+            LogDebug(e);
             var name = TestNameFor(e);
             var reason = e.Result.ErrorMessage;
             Log($"{TestLinePrefix(NoneLabel, name).Disabled()} [ {reason.DisabledReason()} ]");
@@ -391,6 +352,7 @@ namespace Quackers.TestLogger
 
         public void LogSkipped(TestResultEventArgs e)
         {
+            LogDebug(e);
             _skipped++;
             var str = TestNameFor(e);
             var reason = e.Result.ErrorMessage;
@@ -399,6 +361,7 @@ namespace Quackers.TestLogger
 
         public void LogNotFound(TestResultEventArgs e)
         {
+            LogDebug(e);
             _skipped++;
             var str = TestNameFor(e);
             Log($"{TestLinePrefix(NotFoundLabel, str).Error()}");
@@ -432,15 +395,72 @@ namespace Quackers.TestLogger
         private string TestLinePrefix(string prefix, string str)
         {
             var timestamp = ShowTimestamps
-                ? $" [{GenerateTimeStamp()}]"
+                ? $" [{GenerateTimestamp()}]"
                 : "";
             return $"{prefix}{timestamp} {str}";
         }
 
-        private string GenerateTimeStamp()
+        private string GenerateTimestamp()
         {
             var now = DateTime.Now;
             return now.ToString(TimestampFormat);
+        }
+
+        private string GenerateDebugLogTimestamp()
+        {
+            // because TimestampFormat could be anything - it's user-mutable
+            return DateTime.Now.ToString(DEFAULT_TIMESTAMP_FORMAT);
+        }
+
+        private void LogDebug(TestResultEventArgs e)
+        {
+            DebugDumpProps(e.Result);
+        }
+
+        private void DebugDumpProps(object obj)
+        {
+            if (!CanLogToDebugFile)
+            {
+                return;
+            }
+
+            var lines = new List<string>();
+            if (obj is not null)
+            {
+                var type = obj.GetType();
+                var props = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+                lines.Add($"Dumping {props.Length} properties on object of type {type}");
+                foreach (var prop in props)
+                {
+                    lines.Add($"  {prop.Name} = {prop.GetValue(obj)}");
+                }
+            }
+
+            LogDebug(string.Join("\n", lines));
+        }
+
+        private void LogDebug(string str)
+        {
+            if (!CanLogToDebugFile)
+            {
+                return;
+            }
+
+            try
+            {
+                lock (_debugFileLock)
+                {
+                    File.AppendAllText(
+                        DebugLogFile,
+                        $"[{GenerateTimestamp()}] {str}\n"
+                    );
+                }
+            }
+            catch
+            {
+                // disable debug logging if it falls over
+                _canLogToDebugFile = false;
+            }
         }
     }
 }

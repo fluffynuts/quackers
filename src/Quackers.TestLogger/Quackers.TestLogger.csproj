@@ -1,23 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
-    <LangVersion>latest</LangVersion>
-    <Nullable>disable</Nullable>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <DefineConstants>$(DefineConstants);BUILD_PEANUTBUTTER_INTERNAL;BUILD_PEANUTBUTTER_DUCKTYPING_INTERNAL</DefineConstants>
-    <PackageProjectUrl>https://github.com/fluffynuts/Quackers</PackageProjectUrl>
-    <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
-    <PackageTags>testing,logging,dotnet</PackageTags>
-    <PackageVersion>1.0.18-2309291010.42d9b2a</PackageVersion>
-    <PackageIcon>icon.png</PackageIcon>
-    <Description>A console logger for dotnet test which is cute and loud... Just like a duck!</Description>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="17.7.2" />
-    <PackageReference Include="Pastel" Version="4.1.0" />
-    <PackageReference Include="System.Reflection.Emit" Version="4.7.0"/>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\icon.png" Pack="true" Visible="false" PackagePath=""/>
-  </ItemGroup>
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
+        <LangVersion>latest</LangVersion>
+        <Nullable>disable</Nullable>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <DefineConstants>$(DefineConstants);BUILD_PEANUTBUTTER_INTERNAL;BUILD_PEANUTBUTTER_DUCKTYPING_INTERNAL</DefineConstants>
+        <PackageProjectUrl>https://github.com/fluffynuts/Quackers</PackageProjectUrl>
+        <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
+        <PackageTags>testing,logging,dotnet</PackageTags>
+        <PackageVersion>1.0.18-2309291010.42d9b2a</PackageVersion>
+        <PackageIcon>icon.png</PackageIcon>
+        <Description>A console logger for dotnet test which is cute and loud... Just like a duck!</Description>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="17.7.2"/>
+        <PackageReference Include="System.Reflection.Emit" Version="4.7.0"/>
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="..\..\icon.png" Pack="true" Visible="false" PackagePath=""/>
+    </ItemGroup>
+    <ItemGroup>
+      <Compile Include="..\Pastel\src\ConsoleExtensions.cs">
+        <Link>Imported\ConsoleExtensions.cs</Link>
+      </Compile>
+    </ItemGroup>
 </Project>

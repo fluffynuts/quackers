@@ -74,6 +74,36 @@ public class LoggerTests
                 {
                     return ($"QUACKERS_{prop.Name.ToSnakeCase().ToLower()}", prop.Name);
                 }
+
+                (string environmentVariable, string property) KebabUpper(PropertyInfo prop)
+                {
+                    return ($"QUACKERS_{prop.Name.ToKebabCase().ToUpper()}", prop.Name);
+                }
+
+                (string environmentVariable, string property) KebabLower(PropertyInfo prop)
+                {
+                    return ($"QUACKERS_{prop.Name.ToKebabCase().ToLower()}", prop.Name);
+                }
+
+                (string environmentVariable, string property) KebabRandom(PropertyInfo prop)
+                {
+                    return ($"QUACKERS_{prop.Name.ToKebabCase().ToLower()}", prop.Name);
+                }
+
+                (string environmentVariable, string property) DotUpper(PropertyInfo prop)
+                {
+                    return ($"QUACKERS_{prop.Name.ToKebabCase().Replace("-", ".").ToUpper()}", prop.Name);
+                }
+
+                (string environmentVariable, string property) DotLower(PropertyInfo prop)
+                {
+                    return ($"QUACKERS_{prop.Name.ToKebabCase().Replace("-", ".").ToLower()}", prop.Name);
+                }
+
+                (string environmentVariable, string property) DotRandom(PropertyInfo prop)
+                {
+                    return ($"QUACKERS_{prop.Name.ToKebabCase().Replace("-", ".").ToLower()}", prop.Name);
+                }
             }
 
             [TestCaseSource(nameof(EnvironmentConfigTestCases))]
@@ -154,6 +184,36 @@ public class LoggerTests
                 {
                     return (prop.Name.ToSnakeCase().ToLower(), prop.Name);
                 }
+
+                (string parameterName, string propertyName) KebabUpper(PropertyInfo prop)
+                {
+                    return (prop.Name.ToKebabCase().ToUpper(), prop.Name);
+                }
+
+                (string parameterName, string propertyName) KebabLower(PropertyInfo prop)
+                {
+                    return (prop.Name.ToKebabCase().ToLower(), prop.Name);
+                }
+
+                (string parameterName, string propertyName) KebabRandom(PropertyInfo prop)
+                {
+                    return (prop.Name.ToKebabCase().ToLower(), prop.Name);
+                }
+
+                (string parameterName, string propertyName) DotUpper(PropertyInfo prop)
+                {
+                    return (prop.Name.ToKebabCase().Replace("-", ".").ToUpper(), prop.Name);
+                }
+
+                (string parameterName, string propertyName) DotLower(PropertyInfo prop)
+                {
+                    return (prop.Name.ToKebabCase().Replace("-", ".").ToLower(), prop.Name);
+                }
+
+                (string parameterName, string propertyName) DotRandom(PropertyInfo prop)
+                {
+                    return (prop.Name.ToKebabCase().Replace("-", "-").ToLower(), prop.Name);
+                }
             }
 
             [TestCaseSource(nameof(EnvironmentConfigTestCases))]
@@ -174,7 +234,7 @@ public class LoggerTests
                 };
                 var sut = Create();
                 var events = new TestEvents();
-                
+
                 // Act
                 sut.Initialize(events, parameters);
 
@@ -191,7 +251,7 @@ public class LoggerTests
 
     public class TestEvents : TestLoggerEvents
     {
-        #pragma warning disable CS0067
+#pragma warning disable CS0067
         public override event EventHandler<TestRunMessageEventArgs> TestRunMessage;
         public override event EventHandler<TestRunStartEventArgs> TestRunStart;
         public override event EventHandler<TestResultEventArgs> TestResult;
@@ -200,7 +260,7 @@ public class LoggerTests
         public override event EventHandler<TestRunMessageEventArgs> DiscoveryMessage;
         public override event EventHandler<DiscoveredTestsEventArgs> DiscoveredTests;
         public override event EventHandler<DiscoveryCompleteEventArgs> DiscoveryComplete;
-        #pragma warning enable CS0067
+#pragma warning restore CS0067
     }
 
     private static Logger Create()

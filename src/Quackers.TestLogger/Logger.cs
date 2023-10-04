@@ -114,8 +114,7 @@ namespace Quackers.TestLogger
                     continue;
                 }
 
-                var sanitisedKey = key.Substring(ENVIRONMENT_VARIABLE_PREFIX.Length)
-                    .Replace("_", "");
+                var sanitisedKey = DeFuzzify(key);
                 if (!LoggerOptionPropMap.TryGetValue(sanitisedKey, out var prop))
                 {
                     Warn(
@@ -292,10 +291,21 @@ Flags can be set off with one of: {string.Join(",", FalsyValues)}
             string propName
         )
         {
-            var seek = propName.ToLower();
+            var seek = DeFuzzify(propName);
             return parameters.Keys.FirstOrDefault(
-                k => k.ToLower().Replace("_", "") == seek
+                k => DeFuzzify(k) == seek
             );
+        }
+
+        private static string DeFuzzify(string str)
+        {
+            var result = str.StartsWith(ENVIRONMENT_VARIABLE_PREFIX)
+                ? str.Substring(ENVIRONMENT_VARIABLE_PREFIX.Length)
+                : str;
+            return result .ToLower()
+                .Replace("_", "")
+                .Replace("-", "")
+                .Replace(".", "");
         }
 
         private void WarnForUnknownParameters(Dictionary<string, string> parameters)

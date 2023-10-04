@@ -4,6 +4,7 @@
   "description": "A console logger for dotnet test with super-duck-powers",
   "scripts": {
     "test": "zarro test-dotnet",
+    "test-pastel": "cross-env TEST_INCLUDE=Pastel.Tests zarro test-dotnet",
     "test-darker": "cross-env QUACKERS_THEME=darker zarro test-dotnet",
     "release-beta": "cross-env PACK_INCREMENT_VERSION=1 VERSION_INCREMENT_STRATEGY=prerelease zarro release",
     "build": "zarro @",

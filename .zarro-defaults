@@ -8,3 +8,5 @@
 #   marked the setting in here as forced with !
 DOTNET_CORE=1
 PACK_INCLUDE_CSPROJ=Quackers.TestLogger.csproj
+TEST_INCLUDE=Quackers.TestLogger.Tests
+BUILD_INCLUDE=**/*Quackers*.csproj

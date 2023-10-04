@@ -33,18 +33,17 @@ namespace Quackers.TestLogger
         [Help("Flag: show starting timestamps for tests")]
         bool ShowTimestamps { get; set; }
 
-
+        string TestNamePrefix { get; set; }
         bool VerboseSummary { get; set; }
         bool OutputFailuresInline { get; set; }
         bool ShowHelp { get; set; }
 
+        string LogPrefix { get; set; }
         string SummaryStartMarker { get; set; }
         string SummaryCompleteMarker { get; set; }
         string FailureStartMarker { get; set; }
         string SlowSummaryStartMarker { get; set; }
         string SlowSummaryCompleteMarker { get; set; }
-        string LogPrefix { get; set; }
-        string TestNamePrefix { get; set; }
         string FailureIndexPlaceholder { get; set; }
         string SlowIndexPlaceholder { get; set; }
     }

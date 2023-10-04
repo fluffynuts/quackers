@@ -16,6 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{B5359B
 		..\LICENSE = ..\LICENSE
 		..\icon.png = ..\icon.png
 		..\quack.png = ..\quack.png
+		..\.zarro-defaults = ..\.zarro-defaults
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{5E3388FA-196F-4797-9191-63621B139246}"

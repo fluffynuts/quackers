@@ -88,6 +88,7 @@ namespace Quackers.TestLogger
 
         public void ShowSummary()
         {
+            LogDebug("Tests complete: summary starts");
             PrintIfNotNull(SummaryStartMarker);
             PrintSlowTests();
 
@@ -107,10 +108,17 @@ namespace Quackers.TestLogger
             }
 
             PrintIfNotNull(SummaryCompleteMarker);
+            LogDebug("Tests complete: summary complete");
         }
 
         private void PrintSlowTests()
         {
+            if (!HighlightSlowTests)
+            {
+                return;
+            }
+
+            LogDebug("Start slow test summary");
             PrintIfNotNull(SlowSummaryStartMarker);
             if (SlowSummaryStartMarker is null)
             {
@@ -121,12 +129,14 @@ namespace Quackers.TestLogger
             {
                 LogSlowTest(i + 1, _slowTests[i]);
             }
+            LogDebug($"Recorded {_slowTests.Count} slow tests");
 
             PrintIfNotNull(SlowSummaryCompleteMarker);
         }
 
         private void PrintFailures()
         {
+            LogDebug("Start failed tests recap");
             PrintIfNotNull(FailureStartMarker);
             if (FailureStartMarker is null)
             {
@@ -138,6 +148,7 @@ namespace Quackers.TestLogger
                 InsertBreak();
                 LogStoredTestFailure(i + 1, _errors[i]);
             }
+            LogDebug($"Recorded {_errors.Count} failed tests");
         }
 
         void PrintIfNotNull(string str)
@@ -150,6 +161,7 @@ namespace Quackers.TestLogger
 
         private void ShowVerboseDetails()
         {
+            LogDebug("Printing verbose summary of test results");
             var runTime = DateTime.Now - _started;
             LogInfo("\nTest results:");
             LogInfo($"  Passed:   {_passed}");

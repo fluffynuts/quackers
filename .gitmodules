@@ -1,0 +1,3 @@
+[submodule "src/Pastel"]
+	path = src/Pastel
+	url = https://github.com/fluffynuts/Pastel

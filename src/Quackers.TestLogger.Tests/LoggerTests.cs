@@ -43,6 +43,14 @@ public class LoggerTests
                     yield return SnakeUpper(prop);
                     yield return SnakeLower(prop);
                     yield return SnakeRandom(prop);
+                    
+                    yield return KebabUpper(prop);
+                    yield return KebabLower(prop);
+                    yield return KebabRandom(prop);
+                    
+                    yield return DotUpper(prop);
+                    yield return DotLower(prop);
+                    yield return DotRandom(prop);
                 }
 
                 (string environmentVariable, string property) DirectUpper(PropertyInfo prop)
@@ -142,7 +150,7 @@ public class LoggerTests
         public class ViaCommandlineParameter
         {
             public static IEnumerable<(string parameterName, string propertyName)>
-                EnvironmentConfigTestCases()
+                ParameterConfigTestCases()
             {
                 foreach (var prop in typeof(ILoggerProperties).GetProperties())
                 {
@@ -153,6 +161,14 @@ public class LoggerTests
                     yield return SnakeUpper(prop);
                     yield return SnakeLower(prop);
                     yield return SnakeRandom(prop);
+                    
+                    yield return KebabUpper(prop);
+                    yield return KebabLower(prop);
+                    yield return KebabRandom(prop);
+                    
+                    yield return DotUpper(prop);
+                    yield return DotLower(prop);
+                    yield return DotRandom(prop);
                 }
 
                 (string parameterName, string propertyName) DirectUpper(PropertyInfo prop)
@@ -216,7 +232,7 @@ public class LoggerTests
                 }
             }
 
-            [TestCaseSource(nameof(EnvironmentConfigTestCases))]
+            [TestCaseSource(nameof(ParameterConfigTestCases))]
             public void ShouldConfigureConsoleLoggerFromEnvironment(
                 (string parameterName, string propertyName) testCase
             )

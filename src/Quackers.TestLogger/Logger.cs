@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
@@ -25,18 +23,11 @@ namespace Quackers.TestLogger
 
         public void Initialize(TestLoggerEvents events, string testRunDirectory)
         {
-            Log($"Initialize with test dir: {testRunDirectory}");
             SubscribeToEvents(events);
-        }
-
-        private void Log(string str)
-        {
-            Console.Error.WriteLine(str);
         }
 
         public void Initialize(TestLoggerEvents events, Dictionary<string, string> parameters)
         {
-            Log($"Initialize with parameters");
             try
             {
                 _logger = new ConsoleLogger();
@@ -241,10 +232,10 @@ Flags can be set off with one of: {string.Join(",", FalsyValues)}
 
         private void SetLoggerPropsFrom(Dictionary<string, string> parameters)
         {
-            Console.WriteLine("Dumping quackers parameters");
+            Debug("Dumping quackers parameters");
             foreach (var kvp in parameters)
             {
-                Console.WriteLine($"{kvp.Key}: {kvp.Value}");
+                Debug($"  {kvp.Key}: {kvp.Value}");
             }
 
             if (!parameters.Any())

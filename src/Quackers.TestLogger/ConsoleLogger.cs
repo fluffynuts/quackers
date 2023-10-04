@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 
 namespace Quackers.TestLogger
@@ -16,11 +14,31 @@ namespace Quackers.TestLogger
         public string NotFoundLabel { get; set; } = "🤷";
         public bool HighlightSlowTests { get; set; } = true;
         public int SlowTestThresholdMs { get; set; } = 1000;
-        public string DebugLogFile { get; set; }
+
+        public string DebugLogFile
+        {
+            get => _debugLogFile;
+            set
+            {
+                _debugLogFile = value;
+                Debug.DebugLogFile = value;
+            }
+        }
+
+        private string _debugLogFile;
         public bool ShowTimestamps { get; set; } = false;
-        public string TimestampFormat { get; set; } = DEFAULT_TIMESTAMP_FORMAT;
-        
-        public const string DEFAULT_TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss.fff";
+
+        public string TimestampFormat
+        {
+            get => _timestampFormat;
+            set
+            {
+                _timestampFormat = value;
+                Timestamp.TimestampFormat = value;
+            }
+        }
+
+        private string _timestampFormat = Timestamp.DEFAULT_TIMESTAMP_FORMAT;
 
         public bool NoColor { get; set; }
             = Environment.GetEnvironmentVariable("NO_COLOR") is not null;
@@ -56,39 +74,9 @@ namespace Quackers.TestLogger
         private int _skipped;
         private int _failed;
 
-        private readonly object _debugFileLock = new();
-
-        private bool CanLogToDebugFile
-            => _canLogToDebugFile ??= DetermineIfCanLogToDebugFile();
-
-        private bool? _canLogToDebugFile;
-
-        private bool DetermineIfCanLogToDebugFile()
-        {
-            if (string.IsNullOrWhiteSpace(DebugLogFile))
-            {
-                return false;
-            }
-
-            try
-            {
-                var container = Path.GetDirectoryName(DebugLogFile);
-                if (container is not null && !Directory.Exists(container))
-                {
-                    Directory.CreateDirectory(container);
-                }
-
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
         public void ShowSummary()
         {
-            LogDebug("Tests complete: summary starts");
+            Debug.Log("Tests complete: summary starts");
             PrintIfNotNull(SummaryStartMarker);
             PrintSlowTests();
 
@@ -108,7 +96,7 @@ namespace Quackers.TestLogger
             }
 
             PrintIfNotNull(SummaryCompleteMarker);
-            LogDebug("Tests complete: summary complete");
+            Debug.Log("Tests complete: summary complete");
         }
 
         private void PrintSlowTests()
@@ -118,7 +106,7 @@ namespace Quackers.TestLogger
                 return;
             }
 
-            LogDebug("Start slow test summary");
+            Debug.Log("Start slow test summary");
             PrintIfNotNull(SlowSummaryStartMarker);
             if (SlowSummaryStartMarker is null)
             {
@@ -129,14 +117,15 @@ namespace Quackers.TestLogger
             {
                 LogSlowTest(i + 1, _slowTests[i]);
             }
-            LogDebug($"Recorded {_slowTests.Count} slow tests");
+
+            Debug.Log($"Recorded {_slowTests.Count} slow tests");
 
             PrintIfNotNull(SlowSummaryCompleteMarker);
         }
 
         private void PrintFailures()
         {
-            LogDebug("Start failed tests recap");
+            Debug.Log("Start failed tests recap");
             PrintIfNotNull(FailureStartMarker);
             if (FailureStartMarker is null)
             {
@@ -148,7 +137,8 @@ namespace Quackers.TestLogger
                 InsertBreak();
                 LogStoredTestFailure(i + 1, _errors[i]);
             }
-            LogDebug($"Recorded {_errors.Count} failed tests");
+
+            Debug.Log($"Recorded {_errors.Count} failed tests");
         }
 
         void PrintIfNotNull(string str)
@@ -161,7 +151,7 @@ namespace Quackers.TestLogger
 
         private void ShowVerboseDetails()
         {
-            LogDebug("Printing verbose summary of test results");
+            Debug.Log("Printing verbose summary of test results");
             var runTime = DateTime.Now - _started;
             LogInfo("\nTest results:");
             LogInfo($"  Passed:   {_passed}");
@@ -178,8 +168,8 @@ namespace Quackers.TestLogger
             _skipped = 0;
             _failed = 0;
             _started = DateTime.Now;
-            
-            DebugDumpProps(this);
+
+            Debug.DumpProps(this);
         }
 
         private void LogStoredTestFailure(int idx, TestResultEventArgs e)
@@ -342,7 +332,7 @@ namespace Quackers.TestLogger
 
         public void LogFail(TestResultEventArgs e)
         {
-            LogDebug(e);
+            Debug.Log(e);
             var isSlow = IsSlow(e);
             var duration = DurationStringFor(e.Result.Duration, isSlow);
             Log($"{TestLinePrefix(FailLabel, TestNameFor(e)).Fail()} [{duration}]");
@@ -356,7 +346,7 @@ namespace Quackers.TestLogger
 
         public void LogNone(TestResultEventArgs e)
         {
-            LogDebug(e);
+            Debug.Log(e);
             var name = TestNameFor(e);
             var reason = e.Result.ErrorMessage;
             Log($"{TestLinePrefix(NoneLabel, name).Disabled()} [ {reason.DisabledReason()} ]");
@@ -364,7 +354,7 @@ namespace Quackers.TestLogger
 
         public void LogSkipped(TestResultEventArgs e)
         {
-            LogDebug(e);
+            Debug.Log(e);
             _skipped++;
             var str = TestNameFor(e);
             var reason = e.Result.ErrorMessage;
@@ -373,7 +363,7 @@ namespace Quackers.TestLogger
 
         public void LogNotFound(TestResultEventArgs e)
         {
-            LogDebug(e);
+            Debug.Log(e);
             _skipped++;
             var str = TestNameFor(e);
             Log($"{TestLinePrefix(NotFoundLabel, str).Error()}");
@@ -407,72 +397,9 @@ namespace Quackers.TestLogger
         private string TestLinePrefix(string prefix, string str)
         {
             var timestamp = ShowTimestamps
-                ? $" [{GenerateTimestamp()}]"
+                ? $" [{Timestamp.Now}]"
                 : "";
             return $"{prefix}{timestamp} {str}";
-        }
-
-        private string GenerateTimestamp()
-        {
-            var now = DateTime.Now;
-            return now.ToString(TimestampFormat);
-        }
-
-        private string GenerateDebugLogTimestamp()
-        {
-            // because TimestampFormat could be anything - it's user-mutable
-            return DateTime.Now.ToString(DEFAULT_TIMESTAMP_FORMAT);
-        }
-
-        private void LogDebug(TestResultEventArgs e)
-        {
-            DebugDumpProps(e.Result);
-        }
-
-        private void DebugDumpProps(object obj)
-        {
-            if (!CanLogToDebugFile)
-            {
-                return;
-            }
-
-            var lines = new List<string>();
-            if (obj is not null)
-            {
-                var type = obj.GetType();
-                var props = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-                lines.Add($"Dumping {props.Length} properties on object of type {type}");
-                foreach (var prop in props)
-                {
-                    lines.Add($"  {prop.Name} = {prop.GetValue(obj)}");
-                }
-            }
-
-            LogDebug(string.Join("\n", lines));
-        }
-
-        private void LogDebug(string str)
-        {
-            if (!CanLogToDebugFile)
-            {
-                return;
-            }
-
-            try
-            {
-                lock (_debugFileLock)
-                {
-                    File.AppendAllText(
-                        DebugLogFile,
-                        $"[{GenerateTimestamp()}] {str}\n"
-                    );
-                }
-            }
-            catch
-            {
-                // disable debug logging if it falls over
-                _canLogToDebugFile = false;
-            }
         }
     }
 }

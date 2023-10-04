@@ -71,11 +71,27 @@ namespace Quackers.TestLogger
         }
 
         private static readonly HashSet<string> TruthyValues = new(
-            new[] { "yes", "true", "1", "on", "enable" }
+            new[]
+            {
+                "yes",
+                "true",
+                "1",
+                "on",
+                "enable"
+            },
+            StringComparer.OrdinalIgnoreCase
         );
 
         private static readonly HashSet<string> FalsyValues = new(
-            new[] { "no", "false", "0", "off", "disable" }
+            new[]
+            {
+                "no",
+                "false",
+                "0",
+                "off",
+                "disable"
+            },
+            StringComparer.OrdinalIgnoreCase
         );
 
         private static void DumpException(Exception ex, [CallerMemberName] string caller = null)
@@ -98,11 +114,13 @@ namespace Quackers.TestLogger
                     continue;
                 }
 
-                var sanitisedKey = key.Substring(ENVIRONMENT_VARIABLE_PREFIX.Length);
+                var sanitisedKey = key.Substring(ENVIRONMENT_VARIABLE_PREFIX.Length)
+                    .Replace("_", "");
                 if (!LoggerOptionPropMap.TryGetValue(sanitisedKey, out var prop))
                 {
                     Warn(
-                        $"Unrecognised quackers environment variable: {key} (looking for {sanitisedKey} in {string.Join(",", LoggerOptionPropMap.Keys)})");
+                        $"Unrecognised quackers environment variable: {key} (looking for {sanitisedKey} in {string.Join(",", LoggerOptionPropMap.Keys)})"
+                    );
                     foundInvalid = true;
                     continue;
                 }
@@ -123,7 +141,8 @@ namespace Quackers.TestLogger
                 (helpParameterProvided && _logger.ShowHelp);
             if (shouldShowHelp)
             {
-                Warn($@"Quackers configuration help:
+                Warn(
+                    $@"Quackers configuration help:
 - {string.Join("\n- ", LoggerOptionPropMap.Keys.Select(k => $"QUACKERS_{k.ToUpper()} : {HelpFor(k)}"))}
 
 Flags can be set on with one of:  {string.Join(",", TruthyValues)}
@@ -155,33 +174,58 @@ Flags can be set off with one of: {string.Join(",", FalsyValues)}
 
             if (prop.PropertyType == typeof(string))
             {
-                Debug($"Setting {prop.Name} to {value}");
-                prop.SetValue(_logger, value);
+                SetStringLoggerProp(prop, value);
                 return;
             }
 
 
             if (prop.PropertyType == typeof(bool))
             {
-                var isTrue = TruthyValues.Contains(value);
-                var isFalse = FalsyValues.Contains(value);
-                if (isTrue)
-                {
-                    prop.SetValue(_logger, true);
-                }
-                else if (isFalse)
-                {
-                    prop.SetValue(_logger, false);
-                }
-                else
-                {
-                    Warn($"Invalid flag value '{value}' specified for '{prop.Name}'");
-                }
-
+                SetBooleanLoggerProp(prop, value);
                 return;
             }
 
+            if (prop.PropertyType == typeof(int))
+            {
+                SetIntegerLoggerProp(prop, value);
+            }
+
             Warn($"Unhandled logger property type: {prop.PropertyType} for '{prop.Name}' - prop is ignored");
+        }
+
+        private void SetIntegerLoggerProp(PropertyInfo prop, string value)
+        {
+            if (int.TryParse(value, out var parsed))
+            {
+                prop.SetValue(_logger, parsed);
+                return;
+            }
+
+            Warn($"Logger property '{prop.Name}' has type integer, but the value '{value}' was provided");
+        }
+
+        private void SetBooleanLoggerProp(PropertyInfo prop, string value)
+        {
+            var isTrue = TruthyValues.Contains(value);
+            var isFalse = FalsyValues.Contains(value);
+            if (isTrue)
+            {
+                prop.SetValue(_logger, true);
+            }
+            else if (isFalse)
+            {
+                prop.SetValue(_logger, false);
+            }
+            else
+            {
+                Warn($"Invalid flag value '{value}' specified for '{prop.Name}'");
+            }
+        }
+
+        private void SetStringLoggerProp(PropertyInfo prop, string value)
+        {
+            Debug($"Setting {prop.Name} to {value}");
+            prop.SetValue(_logger, value);
         }
 
         private static void Warn(string str)
@@ -213,12 +257,7 @@ Flags can be set off with one of: {string.Join(",", FalsyValues)}
 
             foreach (var prop in LoggerOptionProps)
             {
-                if (!parameters.TryGetValue(prop.Name, out var providedValue))
-                {
-                    Debug($"Can't find prop {prop.Name} in '{string.Join(",", parameters.Keys)}'");
-                    continue;
-                }
-
+                var providedValue = TryFindParameterValueFor(parameters, prop.Name);
                 if (providedValue is null)
                 {
                     continue;
@@ -227,6 +266,36 @@ Flags can be set off with one of: {string.Join(",", FalsyValues)}
                 Debug($"Set prop: {prop.Name} to {providedValue}");
                 SetLoggerProp(prop, providedValue);
             }
+        }
+
+        private string TryFindParameterValueFor(
+            Dictionary<string, string> parameters,
+            string propName
+        )
+        {
+            if (parameters.TryGetValue(propName, out var providedValue))
+            {
+                return providedValue;
+            }
+
+            var fuzzyMatch = FindFirstFuzzyMatchedKey(parameters, propName);
+            if (fuzzyMatch is null)
+            {
+                Debug($"Can't find prop {propName} in '{string.Join(",", parameters.Keys)}'");
+                return null;
+            }
+            return parameters[fuzzyMatch];
+        }
+
+        private string FindFirstFuzzyMatchedKey(
+            Dictionary<string, string> parameters,
+            string propName
+        )
+        {
+            var seek = propName.ToLower();
+            return parameters.Keys.FirstOrDefault(
+                k => k.ToLower().Replace("_", "") == seek
+            );
         }
 
         private void WarnForUnknownParameters(Dictionary<string, string> parameters)
@@ -248,23 +317,31 @@ Flags can be set off with one of: {string.Join(",", FalsyValues)}
 
             if (foundInvalid)
             {
-                Warn($@"Valid quackers parameters are:
+                Warn(
+                    $@"Valid quackers parameters are:
 - {
     string.Join("\n- ", LoggerOptionPropMap.Keys.Select(k => $"{k.ToLower()} :: {LoggerOptionPropMap[k].PropertyType}"))
 }
-Parameters are case-insensitive. Boolean parameters can be set with values yes/no, 1/0, true/false");
+Parameters are case-insensitive. Boolean parameters can be set with values yes/no, 1/0, true/false"
+                );
             }
         }
 
         private static readonly HashSet<string> IgnoreParameters = new(
-            new[] { "TestRunDirectory", "TargetFramework", "debug" },
+            new[]
+            {
+                "TestRunDirectory",
+                "TargetFramework",
+                "debug"
+            },
             StringComparer.OrdinalIgnoreCase
         );
 
         private static readonly PropertyInfo[] LoggerOptionProps = typeof(ILoggerProperties)
             .GetProperties()
-            .Union(typeof(ILoggerProperties).GetInterfaces()
-                .SelectMany(t => t.GetProperties())
+            .Union(
+                typeof(ILoggerProperties).GetInterfaces()
+                    .SelectMany(t => t.GetProperties())
             ).ToArray();
 
         private static readonly Dictionary<string, PropertyInfo> LoggerOptionPropMap =

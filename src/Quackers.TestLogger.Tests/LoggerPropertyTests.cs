@@ -11,16 +11,31 @@ namespace Quackers.TestLogger.Tests
         [TestCase("PassLabel", typeof(string))]
         [TestCase("FailLabel", typeof(string))]
         [TestCase("NoneLabel", typeof(string))]
+        [TestCase("SkipLabel", typeof(string))]
         [TestCase("NotFoundLabel", typeof(string))]
+        
         [TestCase("NoColor", typeof(bool))]
+        
+        [TestCase("Theme", typeof(string))]
+        
+        [TestCase("HighlightSlowTests", typeof(bool))]
+        [TestCase("SlowTestThresholdMs", typeof(int))]
+        
+        [TestCase("DebugLogFile", typeof(string))]
+        
         [TestCase("VerboseSummary", typeof(bool))]
+        [TestCase("OutputFailuresInline", typeof(bool))]
+        [TestCase("ShowHelp", typeof(bool))]
+        
         [TestCase("SummaryStartMarker", typeof(string))]
         [TestCase("SummaryCompleteMarker", typeof(string))]
         [TestCase("FailureStartMarker", typeof(string))]
+        [TestCase("SlowSummaryStartMarker", typeof(string))]
+        [TestCase("SlowSummaryCompleteMarker", typeof(string))]
         [TestCase("LogPrefix", typeof(string))]
-        [TestCase("OutputFailuresInline", typeof(bool))]
         [TestCase("TestNamePrefix", typeof(string))]
         [TestCase("FailureIndexPlaceholder", typeof(string))]
+        [TestCase("SlowIndexPlaceholder", typeof(string))]
         public void ShouldHaveProperty_(string name, Type type)
         {
             // Arrange

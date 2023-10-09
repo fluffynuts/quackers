@@ -35,6 +35,8 @@ namespace Quackers.TestLogger
                 EnableDebugMessagesIfRequired(parameters);
                 SetLoggerPropsFromEnvironment();
                 SetLoggerPropsFrom(parameters);
+                _logger.DumpConfigIfRequired();
+
                 if (_logger.NoColor)
                 {
                     Debug("Disabling color output");

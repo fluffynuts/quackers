@@ -38,6 +38,21 @@ namespace Quackers.TestLogger
             }
         }
 
+        public void DumpConfigIfRequired()
+        {
+            if (!DumpConfig)
+            {
+                return;
+            }
+
+            Console.Error.WriteLine("--- dumping quackers config ---");
+            foreach (var prop in typeof(ILoggerProperties).GetProperties())
+            {
+                Console.Error.WriteLine($"  {prop.Name} = {prop.GetValue(this)}");
+            }
+            Console.Error.WriteLine("--- quackers config dumped ---");
+        }
+
         private string _timestampFormat = Timestamp.DEFAULT_TIMESTAMP_FORMAT;
 
         public bool NoColor { get; set; }
@@ -59,6 +74,7 @@ namespace Quackers.TestLogger
         public bool VerboseSummary { get; set; } = false;
         public bool OutputFailuresInline { get; set; } = false;
         public bool ShowHelp { get; set; } = true;
+        public bool DumpConfig { get; set; }
 
         public string LogPrefix { get; set; }
         public string SummaryStartMarker { get; set; }
@@ -78,9 +94,11 @@ namespace Quackers.TestLogger
         {
             Debug.Log("Tests complete: summary starts");
             PrintIfNotNull(SummaryStartMarker);
+            
             PrintSlowTests();
-
+            
             PrintFailures();
+            
             if (VerboseSummary)
             {
                 InsertBreak();
@@ -123,10 +141,11 @@ namespace Quackers.TestLogger
             }
             InsertBreak();
             Debug.Log("Start failed tests recap");
+
             PrintIfNotNull(FailureStartMarker);
-            if (FailureStartMarker is null)
+            if (FailureStartMarker is null && _errors.Any())
             {
-                LogError("Failures:");
+                LogError("Failures (-):");
             }
 
             for (var i = 0; i < _errors.Count; i++)

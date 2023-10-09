@@ -17,5 +17,6 @@ namespace Quackers.TestLogger
         void ShowSummary();
         void Reset();
         string TimestampFormat { get; set; }
+        void DumpConfigIfRequired();
     }
 }

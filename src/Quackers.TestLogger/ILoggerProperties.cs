@@ -34,9 +34,13 @@ namespace Quackers.TestLogger
         bool ShowTimestamps { get; set; }
 
         string TestNamePrefix { get; set; }
+        [Help("Flag: show a more verbose summary of test results")]
         bool VerboseSummary { get; set; }
+        [Help("Flag: show failures immediately, inline (and summarise again later)")]
         bool OutputFailuresInline { get; set; }
         bool ShowHelp { get; set; }
+        [Help("Flag: dump out the overall config Quackers will use before tests start")]
+        bool DumpConfig { get; set; }
 
         string LogPrefix { get; set; }
         string SummaryStartMarker { get; set; }

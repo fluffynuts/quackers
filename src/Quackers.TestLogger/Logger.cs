@@ -196,6 +196,11 @@ Flags can be set off with one of: {string.Join(",", FalsyValues)}
 
         private void SetBooleanLoggerProp(PropertyInfo prop, string value)
         {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return;
+            }
+
             var isTrue = TruthyValues.Contains(value);
             var isFalse = FalsyValues.Contains(value);
             if (isTrue)

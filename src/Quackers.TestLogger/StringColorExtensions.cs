@@ -15,11 +15,9 @@ namespace Quackers.TestLogger
         private static ITheme DetermineTheme()
         {
             var themeName = ThemeName ?? "default";
-            Console.WriteLine($"--- using theme: {ThemeName} ---"); 
             var result = themeName.Equals("darker", StringComparison.OrdinalIgnoreCase)
                 ? new DarkerTheme() as ITheme
                 : new DefaultTheme();
-            Console.WriteLine($"Resolved theme: {result.GetType().Name}");
             return result;
         }
 

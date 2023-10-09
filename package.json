@@ -40,6 +40,6 @@
   "homepage": "https://github.com/fluffynuts/quackers#readme",
   "devDependencies": {
     "typescript": "^5.2.2",
-    "zarro": "^1.144.285"
+    "zarro": "^1.144.293"
   }
 }

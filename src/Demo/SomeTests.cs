@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using NExpect;
 using NUnit.Framework;
@@ -13,6 +14,12 @@ namespace QuackersTestHost
         [Test]
         public void ShouldPass()
         {
+            if (ForcePass)
+            {
+                Assert.Pass();
+                return;
+            }
+
             // Arrange
             // Act
             Expect(true)
@@ -23,6 +30,12 @@ namespace QuackersTestHost
         [Test]
         public void ShouldFail()
         {
+            if (ForcePass)
+            {
+                Assert.Pass();
+                return;
+            }
+
             // Arrange
             // Act
             Expect(true)
@@ -42,6 +55,12 @@ namespace QuackersTestHost
         [TestCaseSource(nameof(SleepGenerator))]
         public void LongerPasses(int sleepMs)
         {
+            if (ForcePass)
+            {
+                Assert.Pass();
+                return;
+            }
+
             // Arrange
             Thread.Sleep(sleepMs);
             // Act
@@ -61,6 +80,12 @@ namespace QuackersTestHost
         [TestCaseSource(nameof(MakeSomeNumbers))]
         public void ShouldBeLessThan50(int value)
         {
+            if (ForcePass)
+            {
+                Assert.Pass();
+                return;
+            }
+
             // Arrange
             // Act
             Expect(value)
@@ -72,6 +97,12 @@ namespace QuackersTestHost
         [Ignore("skipped because...")]
         public void SkippyTesty()
         {
+            if (ForcePass)
+            {
+                Assert.Pass();
+                return;
+            }
+
             // Arrange
             // Act
             Expect(1)
@@ -83,11 +114,38 @@ namespace QuackersTestHost
         [Explicit("integration test")]
         public void ExplicitTest()
         {
+            if (ForcePass)
+            {
+                Assert.Pass();
+                return;
+            }
+
             // Arrange
             // Act
             Expect(1)
                 .To.Equal(2);
             // Assert
         }
+
+        private bool ForcePass =>
+            _forcePass ??= PassIsForcedViaEnvironment();
+
+        private bool PassIsForcedViaEnvironment()
+        {
+            var envVar = Environment.GetEnvironmentVariable("FORCE_PASS") ?? "";
+            return Truthy.Contains(envVar);
+        }
+
+        private static HashSet<string> Truthy = new(
+            new[]
+            {
+                "true",
+                "1",
+                "yes"
+            },
+            StringComparer.OrdinalIgnoreCase
+        );
+
+        private bool? _forcePass;
     }
 }

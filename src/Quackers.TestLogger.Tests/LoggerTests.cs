@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
@@ -43,11 +44,11 @@ public class LoggerTests
                     yield return SnakeUpper(prop);
                     yield return SnakeLower(prop);
                     yield return SnakeRandom(prop);
-                    
+
                     yield return KebabUpper(prop);
                     yield return KebabLower(prop);
                     yield return KebabRandom(prop);
-                    
+
                     yield return DotUpper(prop);
                     yield return DotLower(prop);
                     yield return DotRandom(prop);
@@ -161,11 +162,11 @@ public class LoggerTests
                     yield return SnakeUpper(prop);
                     yield return SnakeLower(prop);
                     yield return SnakeRandom(prop);
-                    
+
                     yield return KebabUpper(prop);
                     yield return KebabLower(prop);
                     yield return KebabRandom(prop);
-                    
+
                     yield return DotUpper(prop);
                     yield return DotLower(prop);
                     yield return DotRandom(prop);
@@ -261,6 +262,22 @@ public class LoggerTests
                 var propValue = prop.GetValue(consoleLogger);
                 Expect(propValue)
                     .To.Equal(expected);
+            }
+
+            [OneTimeSetUp]
+            public void OneTimeSetup()
+            {
+                foreach (DictionaryEntry e in Environment.GetEnvironmentVariables())
+                {
+                    var varName = $"{e.Key}";
+                    if (varName.StartsWith("QUACKERS_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Environment.SetEnvironmentVariable(
+                            varName,
+                            null
+                        );
+                    }
+                }
             }
         }
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -245,8 +246,6 @@ But explicit test line is:
         {
             // Arrange
             var pass = new Regex("^\\[P\\]");
-            var fail = new Regex("^\\[F\\]");
-            var skip = new Regex("^\\[S\\]");
             var dtRegex = new Regex("^\\[[A-Z]{1}\\] \\[(?<timestamp>[0-9:. -]+)\\]");
             var timestampRegex = new Regex(
                 string.Join(
@@ -291,7 +290,7 @@ But explicit test line is:
                 intVal("second"),
                 intVal("ms")
             );
-            
+
             Expect(timestamp)
                 .To.Be.Greater.Than.Or.Equal.To(Started)
                 .And
@@ -301,6 +300,72 @@ But explicit test line is:
             {
                 return tm.Groups[groupName].Value.AsInteger();
             }
+        }
+    }
+
+    [TestFixture]
+    public class Bugs
+    {
+        private const string SUMMARY_START = "::sum::";
+        private const string SUMMARY_COMPLETE = "::end::";
+        private const string FAILURE_START = "::le_fail::";
+        private const string TEST_NAME_PREFIX = "Foo.Bar.";
+        private static readonly List<string> StdOut = new();
+        private static readonly List<string> StdErr = new();
+
+        [OneTimeSetUp]
+        public void OneTimeSetup()
+        {
+            Started = DateTime.Now;
+            RunTestProjectWithQuackersArgs(
+                string.Join(
+                    ";",
+                    $"testnameprefix={TEST_NAME_PREFIX}",
+                    "passlabel=[P]",
+                    "faillabel=[F]",
+                    "skiplabel=[S]",
+                    "nonelabel=[N]",
+                    "verbosesummary=true",
+                    "nocolor=true",
+                    "outputfailuresinline=true",
+                    "nonelabel=[N]",
+                    "showtimestamps=true",
+                    $"summarystartmarker={SUMMARY_START}",
+                    $"summarycompletemarker={SUMMARY_COMPLETE}",
+                    $"failurestartmarker={FAILURE_START}"
+                ),
+                StdOut,
+                StdErr,
+                new Dictionary<string, string>()
+                {
+                    ["FORCE_PASS"] = "true",
+                }
+            );
+            Finished = DateTime.Now;
+        }
+
+        public DateTime Started { get; set; }
+        public DateTime Finished { get; set; }
+
+        [Test]
+        public void ShouldIncludeVerboseSummaryOnRequestEvenWhenNoFails()
+        {
+            // Arrange
+            var lines = FindLinesBetween(SUMMARY_START, SUMMARY_COMPLETE, StdOut);
+            // Act
+            Expect(lines)
+                .To.Contain.Exactly(1)
+                .Matched.By("Test results:");
+            Expect(lines)
+                .To.Contain.Exactly(1)
+                .Matched.By("Passed:");
+            Expect(lines)
+                .To.Contain.Exactly(1)
+                .Matched.By("Failed:");
+            Expect(lines)
+                .To.Contain.Exactly(1)
+                .Matched.By("Total:");
+            // Assert
         }
     }
 
@@ -326,7 +391,7 @@ But explicit test line is:
         private const string SLOW_COMPLETE = "::SSC::";
         private const string FAILURE_INDEX_PLACEHOLDER = "::[#]::";
         private const string SLOW_INDEX_PLACEHOLDER = "::[-]::";
-        
+
 
         [OneTimeSetUp]
         public void OneTimeSetup()
@@ -446,7 +511,7 @@ But explicit test line is:
                 .Not.To.Be.Null();
             var interesting = FindLinesBetween(
                 s => s.StartsWith(testLine),
-                s => !s.StartsWith(LOG_PREFIX),
+                s => s.Contains(SUMMARY_START),
                 StdOut
             );
             Expect(interesting)
@@ -533,17 +598,31 @@ But explicit test line is:
     private static void RunTestProjectWithQuackersArgs(
         string qargs,
         List<string> stdout,
-        List<string> stderr
+        List<string> stderr,
+        Dictionary<string, string> environment = null
     )
     {
         var demoProject = FindDemoProject();
-        using var proc = ProcessIO.Start(
-            "dotnet",
-            "test",
-            demoProject,
-            "-l",
-            $"\"quackers;{qargs}\""
-        );
+        var env = CreateQuackersCleansedEnvironment();
+        if (environment is not null)
+        {
+            foreach (var kvp in environment)
+            {
+                env[kvp.Key] = kvp.Value;
+            }
+        }
+
+        using var proc = ProcessIO
+            .WithEnvironment(env)
+            .Start(
+                "dotnet",
+                "test",
+                demoProject,
+                "-v", "q",
+                "-l",
+                $"\"quackers;{qargs}\""
+            );
+        var cl = $"dotnet test {demoProject} -v -q -l \"quackers;{qargs}\"";
         if (proc.Process is null)
         {
             throw new InvalidOperationException("Unable to start 'npm run demo'");
@@ -573,6 +652,21 @@ But explicit test line is:
         }
 
         proc.Process.WaitForExit();
+    }
+
+    private static Dictionary<string, string> CreateQuackersCleansedEnvironment()
+    {
+        var env = new Dictionary<string, string>();
+        foreach (DictionaryEntry e in Environment.GetEnvironmentVariables())
+        {
+            var varName = $"{e.Key}";
+            if (varName.StartsWith("QUACKERS_", StringComparison.OrdinalIgnoreCase))
+            {
+                env[varName] = "";
+            }
+        }
+
+        return env;
     }
 
     private static string FindDemoProject()

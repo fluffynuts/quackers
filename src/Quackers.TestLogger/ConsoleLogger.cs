@@ -80,14 +80,6 @@ namespace Quackers.TestLogger
             PrintIfNotNull(SummaryStartMarker);
             PrintSlowTests();
 
-            if (_errors.Count == 0)
-            {
-                // nothing to report
-                PrintIfNotNull(SummaryCompleteMarker);
-                return;
-            }
-
-            InsertBreak();
             PrintFailures();
             if (VerboseSummary)
             {
@@ -125,6 +117,11 @@ namespace Quackers.TestLogger
 
         private void PrintFailures()
         {
+            if (!_errors.Any())
+            {
+                return;
+            }
+            InsertBreak();
             Debug.Log("Start failed tests recap");
             PrintIfNotNull(FailureStartMarker);
             if (FailureStartMarker is null)
@@ -159,6 +156,8 @@ namespace Quackers.TestLogger
             LogInfo($"  Skipped:  {_skipped}");
             LogInfo($"  Total:    {_passed + _failed + _skipped}");
             LogInfo($"  Run time: {runTime.TotalSeconds:0.00} seconds");
+            LogInfo($"  Started:  {_started}");
+            LogInfo($"  Completed: {DateTime.Now}");
         }
 
         public void Reset()

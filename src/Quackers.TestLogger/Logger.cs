@@ -180,6 +180,7 @@ Flags can be set off with one of: {string.Join(",", FalsyValues)}
             if (prop.PropertyType == typeof(int))
             {
                 SetIntegerLoggerProp(prop, value);
+                return;
             }
 
             Warn($"Unhandled logger property type: {prop.PropertyType} for '{prop.Name}' - prop is ignored");

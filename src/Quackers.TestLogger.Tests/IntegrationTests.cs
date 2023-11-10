@@ -391,6 +391,8 @@ But explicit test line is:
         private const string SLOW_COMPLETE = "::SSC::";
         private const string FAILURE_INDEX_PLACEHOLDER = "::[#]::";
         private const string SLOW_INDEX_PLACEHOLDER = "::[-]::";
+        private const string SHOW_TOTALS_START = "::VV::";
+        private const string SHOW_TOTALS_COMPLETE = "::vv::";
 
 
         [OneTimeSetUp]
@@ -404,7 +406,7 @@ But explicit test line is:
                     "faillabel=[F]",
                     "skiplabel=[S]",
                     "nonelabel=[N]",
-                    "verbosesummary=true",
+                    "showTotals=true",
                     "nocolor=true",
                     "showtimestamps=false",
                     "outputfailuresinline=true",
@@ -415,7 +417,9 @@ But explicit test line is:
                     $"slowsummarystartmarker={SLOW_START}",
                     $"slowsummarycompletemarker={SLOW_COMPLETE}",
                     $"failureindexplaceholder={FAILURE_INDEX_PLACEHOLDER}",
-                    $"slowindexplaceholder={SLOW_INDEX_PLACEHOLDER}"
+                    $"slowindexplaceholder={SLOW_INDEX_PLACEHOLDER}",
+                    $"summaryTotalsStartMarker={SHOW_TOTALS_START}",
+                    $"summaryTotalsCompleteMarker={SHOW_TOTALS_COMPLETE}"
                 ),
                 StdOut,
                 StdErr
@@ -459,7 +463,7 @@ But explicit test line is:
                 .To.Contain.Exactly(1)
                 .Starting.With($"{LOG_PREFIX}{SUMMARY_COMPLETE}");
             var summaryBlock =
-                FindLinesBetween($"{LOG_PREFIX}{SUMMARY_START}", $"{LOG_PREFIX}{SUMMARY_COMPLETE}", StdOut)
+                FindLinesBetween($"{LOG_PREFIX}{SHOW_TOTALS_START}", $"{LOG_PREFIX}{SHOW_TOTALS_COMPLETE}", StdOut)
                     .Where(line => line.Length > LOG_PREFIX.Length)
                     .Select(line => line.Substring(LOG_PREFIX.Length))
                     .ToArray();
@@ -618,7 +622,8 @@ But explicit test line is:
                 "dotnet",
                 "test",
                 demoProject,
-                "-v", "q",
+                "-v",
+                "q",
                 "-l",
                 $"\"quackers;{qargs}\""
             );

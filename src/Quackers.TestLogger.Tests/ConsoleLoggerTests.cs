@@ -115,7 +115,7 @@ namespace Quackers.TestLogger.Tests
                 // Arrange
                 var sut = Create();
                 // Act
-                var result = sut.VerboseSummary;
+                var result = sut.ShowTotals;
                 // Assert
                 Expect(result)
                     .To.Be.False();

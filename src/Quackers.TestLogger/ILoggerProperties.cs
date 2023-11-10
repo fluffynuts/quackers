@@ -35,20 +35,34 @@ namespace Quackers.TestLogger
 
         string TestNamePrefix { get; set; }
         [Help("Flag: show a more verbose summary of test results")]
-        bool VerboseSummary { get; set; }
+        bool ShowTotals { get; set; }
         [Help("Flag: show failures immediately, inline (and summarise again later)")]
         bool OutputFailuresInline { get; set; }
         bool ShowHelp { get; set; }
         [Help("Flag: dump out the overall config Quackers will use before tests start")]
         bool DumpConfig { get; set; }
 
+        [Help("Automated usage marker")]
         string LogPrefix { get; set; }
+        [Help("Automated usage marker")]
         string SummaryStartMarker { get; set; }
+        [Help("Automated usage marker")]
         string SummaryCompleteMarker { get; set; }
+        [Help("Automated usage marker")]
         string FailureStartMarker { get; set; }
+        [Help("Automated usage marker")]
+        string FailureCompleteMarker { get; set; }
+        [Help("Automated usage marker")]
         string SlowSummaryStartMarker { get; set; }
+        [Help("Automated usage marker")]
         string SlowSummaryCompleteMarker { get; set; }
+        [Help("Automated usage marker")]
+        string SummaryTotalsStartMarker { get; set; }
+        [Help("Automated usage marker")]
+        string SummaryTotalsCompleteMarker { get; set; }
+        [Help("Automated usage marker")]
         string FailureIndexPlaceholder { get; set; }
+        [Help("Automated usage marker")]
         string SlowIndexPlaceholder { get; set; }
     }
 

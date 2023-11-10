@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
@@ -39,6 +40,7 @@ namespace Quackers.TestLogger
             {
                 _logger = new ConsoleLogger();
 
+                UpgradeObsoleteParameters(parameters);
                 EnableDebugMessagesIfRequired(parameters);
                 SetLoggerPropsFromEnvironment();
                 SetLoggerPropsFrom(parameters);
@@ -56,6 +58,36 @@ namespace Quackers.TestLogger
             {
                 DumpException(ex);
             }
+        }
+
+        private void UpgradeObsoleteParameters(Dictionary<string, string> parameters)
+        {
+            RenameParameter(
+                parameters,
+                "VerboseSummary",
+                nameof(ILoggerProperties.ShowTotals)
+            );
+        }
+
+        private void RenameParameter(
+            Dictionary<string, string> parameters,
+            string oldName,
+            string newName
+        )
+        {
+            var k = parameters.Keys.FirstOrDefault(
+                k => k.Equals(oldName, StringComparison.OrdinalIgnoreCase)
+            );
+            if (k is null)
+            {
+                return;
+            }
+
+            Console.Error.WriteLine(
+                $"WARNING: parameter '{oldName}' is obsolete: rather use '{newName}'"
+            );
+            parameters[newName] = parameters[oldName];
+            parameters.Remove(oldName);
         }
 
         private static void EnableDebugMessagesIfRequired(Dictionary<string, string> parameters)
@@ -252,7 +284,7 @@ Flags can be set off with one of: {string.Join(",", FalsyValues)}
         }
 
         // ReSharper disable once InconsistentNaming
-        private static Action<string> Debug = _ =>
+        private static Action<string> Debug = str =>
         {
         };
 
@@ -376,6 +408,12 @@ Parameters are case-insensitive. Boolean parameters can be set with values yes/n
 
         private static readonly Dictionary<string, PropertyInfo> LoggerOptionPropMap =
             LoggerOptionProps.ToDictionary(pi => pi.Name, pi => pi, StringComparer.OrdinalIgnoreCase);
+
+        static Logger()
+        {
+            LoggerOptionPropMap[nameof(ConsoleLogger.VerboseSummary)]
+                = LoggerOptionPropMap[nameof(ConsoleLogger.ShowTotals)];
+        }
 
 
         private void SubscribeToEvents(TestLoggerEvents events)

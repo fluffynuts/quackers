@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 
 namespace Quackers.TestLogger
@@ -71,7 +72,35 @@ namespace Quackers.TestLogger
         }
 
         private string _theme = "default";
-        public bool VerboseSummary { get; set; } = false;
+
+        public bool VerboseSummary
+        {
+            get => LogObsolete(ShowTotals, "rather use ShowTotals");
+            set => LogObsolete(() => ShowTotals = value, "rather use ShowTotals");
+        }
+
+        private static T LogObsolete<T>(T value, string why, [CallerMemberName] string prop = null)
+        {
+            PrintObsoleteError(why, prop);
+            return value;
+        }
+
+        private static void PrintObsoleteError(string why, string prop)
+        {
+            Console.Error.WriteLine($"{prop} is obsolete: {why}");
+        }
+
+        private static void LogObsolete(
+            Action toRun,
+            string why,
+            [CallerMemberName] string prop = null
+        )
+        {
+            LogObsolete(why, prop);
+            toRun();
+        }
+
+        public bool ShowTotals { get; set; } = false;
         public bool OutputFailuresInline { get; set; } = false;
         public bool ShowHelp { get; set; } = true;
         public bool DumpConfig { get; set; }
@@ -80,8 +109,11 @@ namespace Quackers.TestLogger
         public string SummaryStartMarker { get; set; }
         public string SummaryCompleteMarker { get; set; }
         public string FailureStartMarker { get; set; }
+        public string FailureCompleteMarker { get; set; }
         public string SlowSummaryStartMarker { get; set; }
         public string SlowSummaryCompleteMarker { get; set; }
+        public string SummaryTotalsStartMarker { get; set; }
+        public string SummaryTotalsCompleteMarker { get; set; }
         public string TestNamePrefix { get; set; }
         public string FailureIndexPlaceholder { get; set; }
         public string SlowIndexPlaceholder { get; set; }
@@ -99,10 +131,10 @@ namespace Quackers.TestLogger
             
             PrintFailures();
             
-            if (VerboseSummary)
+            if (ShowTotals)
             {
                 InsertBreak();
-                ShowVerboseDetails();
+                ShowTotalsSummary();
             }
 
             PrintIfNotNull(SummaryCompleteMarker);
@@ -118,7 +150,7 @@ namespace Quackers.TestLogger
 
             Debug.Log("Start slow test summary");
             PrintIfNotNull(SlowSummaryStartMarker);
-            if (SlowSummaryStartMarker is null)
+            if (SlowSummaryStartMarker is null && _slowTests.Any())
             {
                 LogWarning("Slow tests:");
             }
@@ -155,6 +187,7 @@ namespace Quackers.TestLogger
             }
 
             Debug.Log($"Recorded {_errors.Count} failed tests");
+            PrintIfNotNull(FailureCompleteMarker);
         }
 
         void PrintIfNotNull(string str)
@@ -165,9 +198,10 @@ namespace Quackers.TestLogger
             }
         }
 
-        private void ShowVerboseDetails()
+        private void ShowTotalsSummary()
         {
             Debug.Log("Printing verbose summary of test results");
+            PrintIfNotNull(SummaryTotalsStartMarker);
             var runTime = DateTime.Now - _started;
             LogInfo("\nTest results:");
             LogInfo($"  Passed:   {_passed}");
@@ -177,6 +211,7 @@ namespace Quackers.TestLogger
             LogInfo($"  Run time: {runTime.TotalSeconds:0.00} seconds");
             LogInfo($"  Started:  {_started}");
             LogInfo($"  Completed: {DateTime.Now}");
+            PrintIfNotNull(SummaryTotalsCompleteMarker);
         }
 
         public void Reset()

@@ -22,8 +22,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="PeanutButter.RandomGenerators" Version="3.0.180" />
-    <PackageReference Include="PeanutButter.Utils" Version="3.0.180" />
+    <PackageReference Include="PeanutButter.RandomGenerators" Version="3.0.231" />
+    <PackageReference Include="PeanutButter.Utils" Version="3.0.231" />
   </ItemGroup>
 
   <ItemGroup>

@@ -23,12 +23,14 @@ namespace Quackers.TestLogger.Tests
         
         [TestCase("DebugLogFile", typeof(string))]
         
-        [TestCase("VerboseSummary", typeof(bool))]
+        [TestCase("ShowTotals", typeof(bool))]
         [TestCase("OutputFailuresInline", typeof(bool))]
         [TestCase("ShowHelp", typeof(bool))]
         
         [TestCase("SummaryStartMarker", typeof(string))]
         [TestCase("SummaryCompleteMarker", typeof(string))]
+        [TestCase("SummaryTotalsStartMarker", typeof(string))]
+        [TestCase("SummaryTotalsCompleteMarker", typeof(string))]
         [TestCase("FailureStartMarker", typeof(string))]
         [TestCase("SlowSummaryStartMarker", typeof(string))]
         [TestCase("SlowSummaryCompleteMarker", typeof(string))]

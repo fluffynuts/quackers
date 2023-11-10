@@ -28,6 +28,13 @@ namespace Quackers.TestLogger
 
         public void Initialize(TestLoggerEvents events, Dictionary<string, string> parameters)
         {
+            if (!Console.OutputEncoding.Equals(System.Text.Encoding.UTF8))
+            {
+                Debug("Switching console output encoding to UTF8");
+                // required for all unicode characters to display correctly
+                Console.OutputEncoding = System.Text.Encoding.UTF8;
+            }
+
             try
             {
                 _logger = new ConsoleLogger();
@@ -107,17 +114,12 @@ namespace Quackers.TestLogger
                     continue;
                 }
 
-                var sanitisedKey = DeFuzzify(key);
-                if (!LoggerOptionPropMap.TryGetValue(sanitisedKey, out var prop))
+                var prop = FindOptionProperty(key);
+                if (prop is null)
                 {
-                    Warn(
-                        $"Unrecognised quackers environment variable: {key} (looking for {sanitisedKey} in {string.Join(",", LoggerOptionPropMap.Keys)})"
-                    );
                     foundInvalid = true;
                     continue;
                 }
-
-                Debug($"Quackers env var found: {key} -> {sanitisedKey}");
 
                 var envValue = Environment.GetEnvironmentVariable(key);
                 SetLoggerProp(prop, envValue);
@@ -144,15 +146,33 @@ Flags can be set off with one of: {string.Join(",", FalsyValues)}
             }
         }
 
-        private static string HelpFor(string loggerProp)
+        private string HelpFor(string loggerProp)
         {
-            if (!LoggerOptionPropMap.TryGetValue(loggerProp, out var propertyInfo))
+            var prop = FindOptionProperty(loggerProp);
+            if (prop is null)
             {
                 return NO_HELP;
             }
 
-            return propertyInfo.GetCustomAttributes(true).OfType<HelpAttribute>()
+            var help = prop.GetCustomAttributes(true).OfType<HelpAttribute>()
                 .FirstOrDefault()?.Help ?? NO_HELP;
+            var currentValue = prop.GetValue(_logger);
+            return $"{help} ({currentValue})";
+        }
+
+        private static PropertyInfo FindOptionProperty(string key)
+        {
+            var sanitisedKey = DeFuzzify(key);
+            if (!LoggerOptionPropMap.TryGetValue(sanitisedKey, out var prop))
+            {
+                Warn(
+                    $"Unrecognised quackers environment variable: {key} (looking for {sanitisedKey} in {string.Join(",", LoggerOptionPropMap.Keys)})"
+                );
+                return null;
+            }
+
+            Debug($"Quackers env var found: {key} -> {sanitisedKey}");
+            return prop;
         }
 
         private const string NO_HELP = "(no help available)";
@@ -282,6 +302,7 @@ Flags can be set off with one of: {string.Join(",", FalsyValues)}
                 Debug($"Can't find prop {propName} in '{string.Join(",", parameters.Keys)}'");
                 return null;
             }
+
             return parameters[fuzzyMatch];
         }
 
@@ -301,7 +322,7 @@ Flags can be set off with one of: {string.Join(",", FalsyValues)}
             var result = str.StartsWith(ENVIRONMENT_VARIABLE_PREFIX)
                 ? str.Substring(ENVIRONMENT_VARIABLE_PREFIX.Length)
                 : str;
-            return result .ToLower()
+            return result.ToLower()
                 .Replace("_", "")
                 .Replace("-", "")
                 .Replace(".", "");

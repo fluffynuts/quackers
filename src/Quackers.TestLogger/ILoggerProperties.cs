@@ -64,6 +64,8 @@ namespace Quackers.TestLogger
         string FailureIndexPlaceholder { get; set; }
         [Help("Automated usage marker")]
         string SlowIndexPlaceholder { get; set; }
+        [Help("Maximum number of slow tests to display in the summary, if found")]
+        int MaxSlowTestsToDisplay { get; set; }
     }
 
     internal class HelpAttribute : Attribute

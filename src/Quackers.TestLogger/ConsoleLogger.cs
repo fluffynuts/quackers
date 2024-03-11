@@ -4,6 +4,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 
+// ReSharper disable RedundantDefaultMemberInitializer
+
 namespace Quackers.TestLogger
 {
     public class ConsoleLogger : ILogger
@@ -15,6 +17,7 @@ namespace Quackers.TestLogger
         public string NotFoundLabel { get; set; } = "🤷";
         public bool HighlightSlowTests { get; set; } = true;
         public int SlowTestThresholdMs { get; set; } = 1000;
+        public int MaxSlowTestsToDisplay { get; set; } = 10;
 
         public string DebugLogFile
         {
@@ -46,12 +49,13 @@ namespace Quackers.TestLogger
                 return;
             }
 
-            Console.Error.WriteLine("--- dumping quackers config ---");
+            LogToStdErr("--- dumping quackers config ---");
             foreach (var prop in typeof(ILoggerProperties).GetProperties())
             {
-                Console.Error.WriteLine($"  {prop.Name} = {prop.GetValue(this)}");
+                LogToStdErr($"  {prop.Name} = {prop.GetValue(this)}");
             }
-            Console.Error.WriteLine("--- quackers config dumped ---");
+
+            LogToStdErr("--- quackers config dumped ---");
         }
 
         private string _timestampFormat = Timestamp.DEFAULT_TIMESTAMP_FORMAT;
@@ -126,11 +130,11 @@ namespace Quackers.TestLogger
         {
             Debug.Log("Tests complete: summary starts");
             PrintIfNotNull(SummaryStartMarker);
-            
+
             PrintSlowTests();
-            
+
             PrintFailures();
-            
+
             if (ShowTotals)
             {
                 InsertBreak();
@@ -141,7 +145,7 @@ namespace Quackers.TestLogger
             Debug.Log("Tests complete: summary complete");
         }
 
-        private void PrintSlowTests()
+        protected void PrintSlowTests()
         {
             if (!HighlightSlowTests)
             {
@@ -155,12 +159,16 @@ namespace Quackers.TestLogger
                 LogWarning("Slow tests:");
             }
 
-            for (var i = 0; i < _slowTests.Count; i++)
+            var max = Math.Min(_slowTests.Count, MaxSlowTestsToDisplay);
+            var ordered = _slowTests.OrderByDescending(
+                t => t.Result.Duration
+            ).ToArray();
+            for (var i = 0; i < max; i++)
             {
-                LogSlowTest(i + 1, _slowTests[i]);
+                LogSlowTest(i + 1, ordered[i]);
             }
 
-            Debug.Log($"Recorded {_slowTests.Count} slow tests");
+            Debug.Log($"Displaying {max}/{_slowTests.Count} slow tests");
 
             PrintIfNotNull(SlowSummaryCompleteMarker);
         }
@@ -171,6 +179,7 @@ namespace Quackers.TestLogger
             {
                 return;
             }
+
             InsertBreak();
             Debug.Log("Start failed tests recap");
 
@@ -257,10 +266,9 @@ namespace Quackers.TestLogger
         {
             str ??= "";
             var parts = str.Split(
-                    new[]
-                    {
+                    [
                         "\n"
-                    },
+                    ],
                     StringSplitOptions.None
                 )
                 .Select(s => s.Trim('\r'));
@@ -272,17 +280,17 @@ namespace Quackers.TestLogger
 
         public void LogInfo(string str)
         {
-            Log(str);
+            LogToStdout(str);
         }
 
         public void LogWarning(string str)
         {
-            Console.WriteLine($"{LogPrefix}{str.Warn()}");
+            LogToStdout($"{LogPrefix}{str.Warn()}");
         }
 
         public void LogError(string str)
         {
-            Console.WriteLine($"{LogPrefix}{str.Fail()}");
+            LogToStdout($"{LogPrefix}{str.Fail()}");
         }
 
         private void LogInlineTestFailure(TestResultEventArgs e)
@@ -362,7 +370,7 @@ namespace Quackers.TestLogger
             _errors.Add(e);
         }
 
-        private void StoreSlow(TestResultEventArgs e)
+        protected void StoreSlow(TestResultEventArgs e)
         {
             _slowTests.Add(e);
         }
@@ -380,7 +388,7 @@ namespace Quackers.TestLogger
             var duration = DurationStringFor(e.Result.Duration, isSlow);
 
             var str = TestNameFor(e);
-            Log($"{TestLinePrefix(PassLabel, str).Pass()} [{duration}]");
+            LogToStdout($"{TestLinePrefix(PassLabel, str).Pass()} [{duration}]");
         }
 
         public void LogFail(TestResultEventArgs e)
@@ -388,7 +396,7 @@ namespace Quackers.TestLogger
             Debug.Log(e);
             var isSlow = IsSlow(e);
             var duration = DurationStringFor(e.Result.Duration, isSlow);
-            Log($"{TestLinePrefix(FailLabel, TestNameFor(e)).Fail()} [{duration}]");
+            LogToStdout($"{TestLinePrefix(FailLabel, TestNameFor(e)).Fail()} [{duration}]");
             if (OutputFailuresInline)
             {
                 LogInlineTestFailure(e);
@@ -402,7 +410,7 @@ namespace Quackers.TestLogger
             Debug.Log(e);
             var name = TestNameFor(e);
             var reason = e.Result.ErrorMessage;
-            Log($"{TestLinePrefix(NoneLabel, name).Disabled()} [ {reason.DisabledReason()} ]");
+            LogToStdout($"{TestLinePrefix(NoneLabel, name).Disabled()} [ {reason.DisabledReason()} ]");
         }
 
         public void LogSkipped(TestResultEventArgs e)
@@ -411,7 +419,7 @@ namespace Quackers.TestLogger
             _skipped++;
             var str = TestNameFor(e);
             var reason = e.Result.ErrorMessage;
-            Log($"{TestLinePrefix(SkipLabel, str).Disabled()} [ {reason.DisabledReason()} ]");
+            LogToStdout($"{TestLinePrefix(SkipLabel, str).Disabled()} [ {reason.DisabledReason()} ]");
         }
 
         public void LogNotFound(TestResultEventArgs e)
@@ -419,32 +427,56 @@ namespace Quackers.TestLogger
             Debug.Log(e);
             _skipped++;
             var str = TestNameFor(e);
-            Log($"{TestLinePrefix(NotFoundLabel, str).Error()}");
+            LogToStdout($"{TestLinePrefix(NotFoundLabel, str).Error()}");
         }
 
         public void LogErrorMessage(string str)
         {
-            Log(str.Error());
+            LogToStdout(str.Error());
         }
 
         public void LogStacktrace(string str)
         {
-            Log(str.StackTrace());
+            LogToStdout(str.StackTrace());
         }
 
         public void InsertBreak()
         {
-            Console.WriteLine($"{LogPrefix}");
+            LogToStdout($"{LogPrefix}");
         }
 
-        private void Log(string str)
+        protected virtual void LogToStdout(string str)
         {
-            var parts = str.Split('\n')
-                .Select(s => s.Trim());
-            foreach (var part in parts)
+            LogVia(str, Console.WriteLine);
+        }
+
+        protected virtual void LogToStdErr(string str)
+        {
+            LogVia(str, Console.Error.WriteLine);
+        }
+
+        private void LogVia(
+            string str,
+            Action<string> logger
+        )
+        {
+            var lines = SplitIntoLines(str);
+            foreach (var line in lines)
             {
-                Console.WriteLine($"{LogPrefix}{part}");
+                logger($"{LogPrefix}{line}");
             }
+        }
+
+        private static string[] SplitIntoLines(string str)
+        {
+            if (string.IsNullOrWhiteSpace(str))
+            {
+                return [];
+            }
+
+            return str.Split('\n')
+                .Select(s => s.Trim())
+                .ToArray();
         }
 
         private string TestLinePrefix(string prefix, string str)

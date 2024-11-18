@@ -53,7 +53,12 @@ Usage
         - QUACKERS_NOTFOUNDLABEL
         - QUACKERS_NOCOLOR
         - ... etc
-
+    - or by entry in proj file:
+        ```xml
+        <PropertyGroup>
+            <VSTestLogger>quackers</VSTestLogger>
+        </PropertyGroup>
+        ```
 Configuration options
 ---
 - Configuration keys are case-insensitive and tolerant of the characters: `-`, `_`, `.`
